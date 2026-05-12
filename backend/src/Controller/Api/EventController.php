@@ -2,12 +2,12 @@
 
 namespace App\Controller\Api;
 
-use App\Repository\EventRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
-use App\Application\Event\CreateEventDto;
-use App\Application\Event\CreateEventHandler;
+use App\Application\Event\CreateEvent\CreateEventDto;
+use App\Application\Event\CreateEvent\CreateEventHandler;
+use App\Application\Event\ListEvents\ListEventsHandler;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -15,24 +15,12 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 final class EventController extends AbstractController
 {
     #[Route('/api/events', name: 'api_events_index', methods: ['GET'])]
-    public function index(EventRepository $eventRepository): JsonResponse
+    public function index(ListEventsHandler $handler): JsonResponse
     {
-        $events = $eventRepository->findBy([], ['startsAt' => 'ASC']);
-
-        return $this->json(array_map(static function ($event): array {
-            return [
-                'id' => $event->getId(),
-                'title' => $event->getTitle(),
-                'description' => $event->getDescription(),
-                'startsAt' => $event->getStartsAt()?->format(DATE_ATOM),
-                'endsAt' => $event->getEndsAt()?->format(DATE_ATOM),
-                'location' => $event->getLocation(),
-                'capacity' => $event->getCapacity(),
-            ];
-        }, $events));
+        return $this->json($handler->handle());
     }
 
-    #[Route('api/events', name: 'api_events_create', methods: ['POST'])]
+    #[Route('/api/events', name: 'api_events_create', methods: ['POST'])]
     public function create(
         Request $request,
         ValidatorInterface $validator,
@@ -40,7 +28,7 @@ final class EventController extends AbstractController
     ) : JsonResponse {
         $data = json_decode($request->getContent(), true);
 
-        $dto = CreateEventDto::fromArray($data);
+        $dto = CreateEventDto::fromArray(is_array($data) ? $data : []);
 
         $errors = $validator->validate($dto);
 

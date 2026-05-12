@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Application\Event;
+namespace App\Application\Event\CreateEvent;
 
-use App\Application\Event\CreateEventDto;
+use App\Application\Event\CreateEvent\CreateEventDto;
 use App\Entity\Event;
 use Doctrine\ORM\EntityManagerInterface;
 
