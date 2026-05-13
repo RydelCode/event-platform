@@ -1,6 +1,6 @@
-# EventForge
+# Event Platform
 
-EventForge is a full-stack event management and booking platform built with Symfony, React, PostgreSQL, Docker, and Azure.
+Event Platform is a full-stack event management and booking platform built with Symfony, React, PostgreSQL, Docker, and Azure.
 
 The project serves both as a portfolio application and a backend/frontend engineering learning platform focused on real-world architecture, scalability, and infrastructure concepts.
 
