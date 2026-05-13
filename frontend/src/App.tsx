@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { EventCreateForm } from "./components/EventCreateForm";
 import { fetchEvents, type EventItem } from "./api/events";
+import { EventList } from "./components/EventList";
 
 function App() {
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -38,28 +39,8 @@ function App() {
 
       {error && <p>{error}</p>}
 
-      {!isLoading && !error && events.length === 0 && (
-        <p>No events available.</p>
-      )}
-
-      {!isLoading && !error && events.length > 0 && (
-        <ul>
-          {events.map((event) => (
-            <li key={event.id}>
-              <h2>{event.title}</h2>
-
-              <p>{event.description}</p>
-
-              <p>
-                <strong>Location:</strong> {event.location}
-              </p>
-
-              <p>
-                <strong>Capacity:</strong> {event.capacity}
-              </p>
-            </li>
-          ))}
-        </ul>
+      {!isLoading && !error && (
+        <EventList events={events} />
       )}
     </main>
   );
