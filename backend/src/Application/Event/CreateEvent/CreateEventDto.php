@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Application\Event;
+namespace App\Application\Event\CreateEvent;
 
 use Symfony\Component\Validator\Constraints as Assert;
 
