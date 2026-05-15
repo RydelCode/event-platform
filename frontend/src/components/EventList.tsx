@@ -1,15 +1,14 @@
+import { Link } from "react-router-dom";
 import { type EventItem } from "../api/events";
+import { routes } from "../routes/routes";
 
 type EventListProps = {
   events: EventItem[];
 };
 
 export function EventList({ events }: EventListProps) {
-
   if (events.length === 0) {
-    return (
-      <p>No events available.</p>
-    )
+    return <p>No events available.</p>;
   }
 
   return (
@@ -27,6 +26,8 @@ export function EventList({ events }: EventListProps) {
           <p>
             <strong>Capacity:</strong> {event.capacity}
           </p>
+
+          <Link to={routes.eventDetails(event.id)}>View Details</Link>
         </li>
       ))}
     </ul>

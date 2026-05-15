@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Application\Event\CreateEvent\CreateEventDto;
 use App\Application\Event\CreateEvent\CreateEventHandler;
+use App\Application\Event\GetEventDetails\GetEventDetailsHandler;
 use App\Application\Event\ListEvents\ListEventsHandler;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,7 +26,7 @@ final class EventController extends AbstractController
         Request $request,
         ValidatorInterface $validator,
         CreateEventHandler $handler
-    ) : JsonResponse {
+    ): JsonResponse {
         $data = json_decode($request->getContent(), true);
 
         $dto = CreateEventDto::fromArray(is_array($data) ? $data : []);
@@ -44,5 +45,22 @@ final class EventController extends AbstractController
             'message' => 'Event created',
             'id' => $event->getId(),
         ], Response::HTTP_CREATED);
+    }
+
+    #[Route('/api/events/{id}', name: 'api_events_details', methods: ['GET'])]
+    public function details(
+        int $id,
+        GetEventDetailsHandler $handler
+    ): JsonResponse {
+        $event = $handler->handle($id);
+
+        if (is_null($event)) {
+            return $this->json([
+            'message' => 'No event found with ID: ' . $id,
+            ],
+            Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->json($event);
     }
 }
