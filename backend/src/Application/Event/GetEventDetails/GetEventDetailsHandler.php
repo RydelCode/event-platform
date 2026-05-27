@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Application\Event\GetEventDetails;
 
 use App\Repository\EventRepository;
@@ -8,16 +10,14 @@ final readonly class GetEventDetailsHandler
 {
     public function __construct(
         private EventRepository $eventRepository,
-    ) {}
+    ) {
+    }
 
-    /**
-     * @return GetEventDetailsDto|null
-     */
-    public function handle(int $id) : ?GetEventDetailsDto
+    public function handle(int $id): ?GetEventDetailsDto
     {
         $event = $this->eventRepository->find($id);
 
-        if ($event === null) {
+        if (null === $event) {
             return null;
         }
 

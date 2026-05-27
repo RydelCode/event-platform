@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use App\Repository\EventRepository;
@@ -35,7 +37,8 @@ class Event
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->createdAt = new \DateTimeImmutable();
     }
 

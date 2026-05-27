@@ -39,9 +39,7 @@ function App() {
 
       {error && <p>{error}</p>}
 
-      {!isLoading && !error && (
-        <EventList events={events} />
-      )}
+      {!isLoading && !error && <EventList events={events} />}
     </main>
   );
 }

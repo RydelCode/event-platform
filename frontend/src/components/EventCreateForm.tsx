@@ -22,9 +22,7 @@ export function EventCreateForm({ onEventCreated }: EventCreateFormProps) {
 
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>,
-  ): Promise<void> {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
 
     setIsSubmitting(true);
@@ -44,9 +42,7 @@ export function EventCreateForm({ onEventCreated }: EventCreateFormProps) {
     }
   }
 
-  function handleChange(
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) {
+  function handleChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { id, value } = event.target;
 
     setFormData((prev) => ({
@@ -64,22 +60,13 @@ export function EventCreateForm({ onEventCreated }: EventCreateFormProps) {
       <div>
         <label htmlFor="title">Title</label>
 
-        <input
-          id="title"
-          type="text"
-          value={formData.title}
-          onChange={handleChange}
-        />
+        <input id="title" type="text" value={formData.title} onChange={handleChange} />
       </div>
 
       <div>
         <label htmlFor="description">Description</label>
 
-        <textarea
-          id="description"
-          value={formData.description}
-          onChange={handleChange}
-        />
+        <textarea id="description" value={formData.description} onChange={handleChange} />
       </div>
 
       <div>
@@ -96,34 +83,19 @@ export function EventCreateForm({ onEventCreated }: EventCreateFormProps) {
       <div>
         <label htmlFor="endsAt">Ends At</label>
 
-        <input
-          id="endsAt"
-          type="datetime-local"
-          value={formData.endsAt}
-          onChange={handleChange}
-        />
+        <input id="endsAt" type="datetime-local" value={formData.endsAt} onChange={handleChange} />
       </div>
 
       <div>
         <label htmlFor="location">Location</label>
 
-        <input
-          id="location"
-          type="text"
-          value={formData.location}
-          onChange={handleChange}
-        />
+        <input id="location" type="text" value={formData.location} onChange={handleChange} />
       </div>
 
       <div>
         <label htmlFor="capacity">Capacity</label>
 
-        <input
-          id="capacity"
-          type="number"
-          value={formData.capacity}
-          onChange={handleChange}
-        />
+        <input id="capacity" type="number" value={formData.capacity} onChange={handleChange} />
       </div>
 
       <button type="submit" disabled={isSubmitting}>

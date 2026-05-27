@@ -5,10 +5,10 @@ import { EventDetailsPage } from "../pages/EventDetailsPage";
 import { paths } from "./routes";
 
 export function AppRoutes() {
-    return (
-        <Routes>
-            <Route path={paths.home} element={<App />} />
-            <Route path={paths.eventDetails} element={<EventDetailsPage />} />
-        </Routes>
-    )
+  return (
+    <Routes>
+      <Route path={paths.home} element={<App />} />
+      <Route path={paths.eventDetails} element={<EventDetailsPage />} />
+    </Routes>
+  );
 }

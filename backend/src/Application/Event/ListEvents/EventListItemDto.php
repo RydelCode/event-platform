@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Application\Event\ListEvents;
 
 use App\Entity\Event;
@@ -13,8 +15,9 @@ final readonly class EventListItemDto
         public string $startsAt,
         public string $endsAt,
         public string $location,
-        public int $capacity
-    ) {}
+        public int $capacity,
+    ) {
+    }
 
     public static function fromEntity(Event $event): self
     {

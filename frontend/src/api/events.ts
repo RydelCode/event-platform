@@ -27,9 +27,7 @@ export async function fetchEvents(): Promise<EventItem[]> {
 }
 
 export async function fetchEvent(id: number): Promise<EventItem> {
-  const response = await apiClient.get<EventItem>(
-    apiEndpoints.eventDetails(id),
-  );
+  const response = await apiClient.get<EventItem>(apiEndpoints.eventDetails(id));
 
   return response.data;
 }
