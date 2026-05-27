@@ -14,9 +14,11 @@ class CreateEventDto
     public ?string $description;
 
     #[Assert\NotBlank]
+    #[Assert\DateTime(format: \DateTimeInterface::ATOM)]
     public string $startsAt;
 
     #[Assert\NotBlank]
+    #[Assert\DateTime(format: \DateTimeInterface::ATOM)]
     public string $endsAt;
 
     #[Assert\NotBlank]
