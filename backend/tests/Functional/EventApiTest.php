@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Functional;
 
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -8,7 +10,6 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 final class EventApiTest extends WebTestCase
 {
     private const EVENT_CREATE_TEST_CASE = [
-
         'title' => 'Test Event',
         'description' => 'Created from functional test',
         'startsAt' => '2026-06-01T10:00:00+00:00',
@@ -97,7 +98,6 @@ final class EventApiTest extends WebTestCase
         self::assertSame(self::EVENT_CREATE_TEST_CASE['location'], $eventDetails['location']);
         self::assertSame(self::EVENT_CREATE_TEST_CASE['capacity'], $eventDetails['capacity']);
     }
-
 
     public function testCreatedEventsAreReturnedInListOrderedByStartDate(): void
     {

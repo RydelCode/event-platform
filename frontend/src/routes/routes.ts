@@ -4,6 +4,6 @@ export const routes = {
 };
 
 export const paths = {
-    home: "/",
-    eventDetails: "/events/:id"
-}
+  home: "/",
+  eventDetails: "/events/:id",
+};

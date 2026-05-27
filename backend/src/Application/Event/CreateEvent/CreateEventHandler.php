@@ -1,8 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Application\Event\CreateEvent;
 
-use App\Application\Event\CreateEvent\CreateEventDto;
 use App\Entity\Event;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -10,9 +11,10 @@ final readonly class CreateEventHandler
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-    ) {}
+    ) {
+    }
 
-    public function handle(CreateEventDto $dto) : Event
+    public function handle(CreateEventDto $dto): Event
     {
         $event = new Event();
 

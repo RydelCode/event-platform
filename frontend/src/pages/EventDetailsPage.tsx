@@ -50,27 +50,26 @@ export function EventDetailsPage() {
   }
 
   return (
-    <main style={{padding: "2rem", fontFamily: "sans-serif"}}>
-        <h1>{event.title}</h1>
-        
-        {event.description && (<p>{event.description}</p>)}
+    <main style={{ padding: "2rem", fontFamily: "sans-serif" }}>
+      <h1>{event.title}</h1>
 
-        <p>
-            <strong>Starts at: </strong> {formatDate(event.startsAt)}
-        </p>
+      {event.description && <p>{event.description}</p>}
 
-        <p>
-            <strong>Ends at: </strong> {formatDate(event.endsAt)}
-        </p>
-    
-        <p>
-            <strong>Location: </strong> {event.location}
-        </p>
+      <p>
+        <strong>Starts at: </strong> {formatDate(event.startsAt)}
+      </p>
 
-        <p>
-            <strong>Capacity: </strong> {event.capacity}
-        </p>
-        
+      <p>
+        <strong>Ends at: </strong> {formatDate(event.endsAt)}
+      </p>
+
+      <p>
+        <strong>Location: </strong> {event.location}
+      </p>
+
+      <p>
+        <strong>Capacity: </strong> {event.capacity}
+      </p>
     </main>
-  )
+  );
 }
