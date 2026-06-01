@@ -18,6 +18,11 @@ final class EventApiTest extends WebTestCase
         'capacity' => 100,
     ];
 
+    private const REGISTRATION_CREATE_TEST_CASE = [
+        'attendeeName' => 'Test Attendee',
+        'attendeeEmail' => 'test@mail.com',
+    ];
+
     public function testListEventsReturnsSuccessfulResponse(): void
     {
         $client = static::createClient();
@@ -128,6 +133,43 @@ final class EventApiTest extends WebTestCase
             array_search($laterEvent['id'], $ids, true),
             array_search($earlierEvent['id'], $ids, true)
         );
+    }
+
+    public function testCreateRegistrationReturnsCreatedResponse(): void
+    {
+        $client = static::createClient();
+
+        $createdEventData = $this->createEvent($client, self::EVENT_CREATE_TEST_CASE);
+
+        $this->postJson($client, sprintf('/api/events/%d/registrations', $createdEventData['id']), self::REGISTRATION_CREATE_TEST_CASE);
+
+        self::assertResponseStatusCodeSame(201);
+
+        $data = $this->decodeJsonResponse($client);
+
+        self::assertArrayHasKey('id', $data);
+        self::assertIsInt($data['id']);
+        self::assertSame('Registration created', $data['message']);
+    }
+
+    public function testCreateRegistrationMissingEventReturnsNotFound(): void
+    {
+        $client = static::createClient();
+
+        $this->postJson($client, '/api/events/9999999/registrations', self::REGISTRATION_CREATE_TEST_CASE);
+
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testCreateRegistrationWithInvalidPayloadReturnsBadRequest(): void
+    {
+        $client = static::createClient();
+
+        $createdEventData = $this->createEvent($client, self::EVENT_CREATE_TEST_CASE);
+
+        $this->postJson($client, sprintf('/api/events/%d/registrations', $createdEventData['id']), []);
+
+        self::assertResponseStatusCodeSame(400);
     }
 
     private function createEvent(KernelBrowser $client, array $payload): array
