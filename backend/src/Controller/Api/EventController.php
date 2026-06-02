@@ -8,6 +8,8 @@ use App\Application\Event\CreateEvent\CreateEventDto;
 use App\Application\Event\CreateEvent\CreateEventHandler;
 use App\Application\Event\GetEventDetails\GetEventDetailsHandler;
 use App\Application\Event\ListEvents\ListEventsHandler;
+use App\Application\Event\RegisterForEvent\DuplicateRegistrationDetectedException;
+use App\Application\Event\RegisterForEvent\EventCapacityExceededException;
 use App\Application\Event\RegisterForEvent\RegisterForEventDto;
 use App\Application\Event\RegisterForEvent\RegisterForEventHandler;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -87,7 +89,17 @@ final class EventController extends AbstractController
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        $registration = $handler->handle($id, $dto);
+        try {
+            $registration = $handler->handle($id, $dto);
+        } catch (EventCapacityExceededException) {
+            return $this->json([
+                'message' => 'Event is full',
+            ], Response::HTTP_CONFLICT);
+        } catch (DuplicateRegistrationDetectedException) {
+            return $this->json([
+                'message' => 'Email already registered for the event',
+            ], Response::HTTP_CONFLICT);
+        }
 
         if (null === $registration) {
             return $this->json([

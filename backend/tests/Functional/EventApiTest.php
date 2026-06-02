@@ -172,6 +172,42 @@ final class EventApiTest extends WebTestCase
         self::assertResponseStatusCodeSame(400);
     }
 
+    public function testCreateRegistrationForFullEventReturnsConflict(): void
+    {
+        $client = static::createClient();
+
+        $createdEventData = $this->createEvent($client, [...self::EVENT_CREATE_TEST_CASE, 'capacity' => 1]);
+
+        $this->postJson($client, sprintf('/api/events/%d/registrations', $createdEventData['id']), self::REGISTRATION_CREATE_TEST_CASE);
+
+        self::assertResponseStatusCodeSame(201);
+
+        $this->postJson($client, sprintf('/api/events/%d/registrations', $createdEventData['id']), [...self::REGISTRATION_CREATE_TEST_CASE, 'attendeeEmail' => 'test2@mail.com']);
+
+        $response = $this->decodeJsonResponse($client);
+
+        self::assertResponseStatusCodeSame(409);
+        self::assertSame('Event is full', $response['message']);
+    }
+
+    public function testCreateRegistrationForSameEventWithDuplicateEmailReturnsConflict(): void
+    {
+        $client = static::createClient();
+
+        $createdEventData = $this->createEvent($client, [...self::EVENT_CREATE_TEST_CASE]);
+
+        $this->postJson($client, sprintf('/api/events/%d/registrations', $createdEventData['id']), self::REGISTRATION_CREATE_TEST_CASE);
+
+        self::assertResponseStatusCodeSame(201);
+
+        $this->postJson($client, sprintf('/api/events/%d/registrations', $createdEventData['id']), [...self::REGISTRATION_CREATE_TEST_CASE]);
+
+        $response = $this->decodeJsonResponse($client);
+
+        self::assertResponseStatusCodeSame(409);
+        self::assertSame('Email already registered for the event', $response['message']);
+    }
+
     private function createEvent(KernelBrowser $client, array $payload): array
     {
         $this->postJson($client, '/api/events', $payload);
