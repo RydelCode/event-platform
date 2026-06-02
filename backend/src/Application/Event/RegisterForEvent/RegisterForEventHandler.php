@@ -20,30 +20,32 @@ final readonly class RegisterForEventHandler
 
     public function handle(int $eventId, RegisterForEventDto $dto): ?Registration
     {
-        /** @var \App\Entity\Event|null $event */
-        $event = $this->eventRepository->find($eventId);
+        return $this->entityManager->wrapInTransaction(function () use ($eventId, $dto): ?Registration {
+            /** @var \App\Entity\Event|null $event */
+            $event = $this->eventRepository->find($eventId);
 
-        if (null === $event) {
-            return null;
-        }
+            if (null === $event) {
+                return null;
+            }
 
-        if ($event->getRegistrations()->count() >= $event->getCapacity()) {
-            throw new EventCapacityExceededException($eventId);
-        }
+            if ($event->getRegistrations()->count() >= $event->getCapacity()) {
+                throw new EventCapacityExceededException($eventId);
+            }
 
-        if ($this->registrationRepository->existsForEventAndEmail($event, $dto->attendeeEmail)) {
-            throw new DuplicateRegistrationDetectedException($eventId, $dto->attendeeEmail);
-        }
+            if ($this->registrationRepository->existsForEventAndEmail($event, $dto->attendeeEmail)) {
+                throw new DuplicateRegistrationDetectedException($eventId, $dto->attendeeEmail);
+            }
 
-        $registration = new Registration();
+            $registration = new Registration();
 
-        $registration->setAttendeeName($dto->attendeeName)
-            ->setAttendeeEmail($dto->attendeeEmail)
-            ->setEvent($event);
+            $registration->setAttendeeName($dto->attendeeName)
+                ->setAttendeeEmail($dto->attendeeEmail)
+                ->setEvent($event);
 
-        $this->entityManager->persist($registration);
-        $this->entityManager->flush();
+            $this->entityManager->persist($registration);
+            $this->entityManager->flush();
 
-        return $registration;
+            return $registration;
+        });
     }
 }
