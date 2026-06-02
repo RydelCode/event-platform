@@ -22,7 +22,7 @@ final readonly class RegisterForEventHandler
     {
         return $this->entityManager->wrapInTransaction(function () use ($eventId, $dto): ?Registration {
             /** @var \App\Entity\Event|null $event */
-            $event = $this->eventRepository->find($eventId);
+            $event = $this->eventRepository->findWithPessimisticWriteLock($eventId);
 
             if (null === $event) {
                 return null;
