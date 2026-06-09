@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Application\Event\RegisterForEvent;
 
+use App\Application\Event\RegisterForEvent\Message\RegistrationCreated;
 use App\Entity\Registration;
 use App\Repository\EventRepository;
 use App\Repository\RegistrationRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 final readonly class RegisterForEventHandler
 {
@@ -15,12 +17,13 @@ final readonly class RegisterForEventHandler
         private EntityManagerInterface $entityManager,
         private EventRepository $eventRepository,
         private RegistrationRepository $registrationRepository,
+        private MessageBusInterface $messageBus,
     ) {
     }
 
     public function handle(int $eventId, RegisterForEventDto $dto): ?Registration
     {
-        return $this->entityManager->wrapInTransaction(function () use ($eventId, $dto): ?Registration {
+        $registration = $this->entityManager->wrapInTransaction(function () use ($eventId, $dto): ?Registration {
             /** @var \App\Entity\Event|null $event */
             $event = $this->eventRepository->findWithPessimisticWriteLock($eventId);
 
@@ -47,5 +50,11 @@ final readonly class RegisterForEventHandler
 
             return $registration;
         });
+
+        if (null !== $registration) {
+            $this->messageBus->dispatch(new RegistrationCreated($registration->getId()));
+        }
+
+        return $registration;
     }
 }
