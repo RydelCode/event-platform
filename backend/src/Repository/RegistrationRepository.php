@@ -32,6 +32,11 @@ class RegistrationRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    public function getById(int $id): ?Registration
+    {
+        return $this->find($id);
+    }
+
     //    /**
     //     * @return Registration[] Returns an array of Registration objects
     //     */
