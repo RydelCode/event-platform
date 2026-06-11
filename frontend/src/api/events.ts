@@ -20,6 +20,21 @@ export type CreateEventPayload = {
   capacity: number;
 };
 
+export type CreateEventResponse = {
+  message: string;
+  id: number;
+};
+
+export type RegisterForEventPayload = {
+  attendeeName: string;
+  attendeeEmail: string;
+};
+
+export type RegisterForEventResponse = {
+  message: string;
+  id: number;
+};
+
 export async function fetchEvents(): Promise<EventItem[]> {
   const response = await apiClient.get<EventItem[]>(apiEndpoints.events);
 
@@ -32,6 +47,17 @@ export async function fetchEvent(id: number): Promise<EventItem> {
   return response.data;
 }
 
-export async function createEvent(payload: CreateEventPayload): Promise<void> {
-  await apiClient.post(apiEndpoints.events, payload);
+export async function createEvent(payload: CreateEventPayload): Promise<CreateEventResponse> {
+  const response = await apiClient.post(apiEndpoints.events, payload);
+
+  return response.data;
+}
+
+export async function registerForEvent(
+  eventId: number,
+  payload: RegisterForEventPayload,
+): Promise<RegisterForEventResponse> {
+  const response = await apiClient.post(apiEndpoints.eventRegistration(eventId), payload);
+
+  return response.data;
 }
