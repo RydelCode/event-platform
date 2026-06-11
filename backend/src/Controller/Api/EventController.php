@@ -12,6 +12,7 @@ use App\Application\Event\RegisterForEvent\DuplicateRegistrationDetectedExceptio
 use App\Application\Event\RegisterForEvent\EventCapacityExceededException;
 use App\Application\Event\RegisterForEvent\RegisterForEventDto;
 use App\Application\Event\RegisterForEvent\RegisterForEventHandler;
+use App\Infrastructure\Http\ValidationErrorFormatter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -75,6 +76,7 @@ final class EventController extends AbstractController
         int $id,
         Request $request,
         ValidatorInterface $validator,
+        ValidationErrorFormatter $validationErrorFormatter,
         RegisterForEventHandler $handler,
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
@@ -85,7 +87,7 @@ final class EventController extends AbstractController
 
         if (count($errors) > 0) {
             return $this->json([
-                'errors' => (string) $errors,
+                'errors' => $validationErrorFormatter->format($errors),
             ], Response::HTTP_BAD_REQUEST);
         }
 

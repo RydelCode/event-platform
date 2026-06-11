@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { fetchEvent, type EventItem } from "../api/events";
 import { formatDate } from "../utils/date";
+import { EventRegistrationForm } from "../components/EventRegistrationForm";
 
 export function EventDetailsPage() {
   const { id } = useParams();
@@ -70,6 +71,8 @@ export function EventDetailsPage() {
       <p>
         <strong>Capacity: </strong> {event.capacity}
       </p>
+
+      <EventRegistrationForm eventId={event.id} />
     </main>
   );
 }
