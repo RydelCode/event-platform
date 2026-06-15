@@ -5,7 +5,9 @@ type LoadingStateProps = {
 export function LoadingState({ message = "Loading..." }: LoadingStateProps) {
   return (
     <main>
-      <p>{message}</p>
+      <section className="state-card">
+        <p>{message}</p>
+      </section>
     </main>
   );
 }

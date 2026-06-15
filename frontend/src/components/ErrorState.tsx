@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 type ErrorStateProps = {
   title?: string;
   message: string;
@@ -6,8 +8,14 @@ type ErrorStateProps = {
 export function ErrorState({ title = "Something went wrong", message }: ErrorStateProps) {
   return (
     <main>
-      <h1>{title}</h1>
-      <p>{message}</p>
+      <section className="state-card">
+        <h1>{title}</h1>
+        <p>{message}</p>
+
+        <Link className="back-link" to="/">
+          ← Back to homepage
+        </Link>
+      </section>
     </main>
   );
 }
