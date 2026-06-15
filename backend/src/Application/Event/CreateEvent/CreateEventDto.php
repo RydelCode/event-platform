@@ -16,11 +16,11 @@ class CreateEventDto
     public ?string $description;
 
     #[Assert\NotBlank]
-    #[Assert\DateTime(format: \DateTimeInterface::ATOM)]
+    #[Assert\DateTime(format: 'Y-m-d\TH:i')]
     public string $startsAt;
 
     #[Assert\NotBlank]
-    #[Assert\DateTime(format: \DateTimeInterface::ATOM)]
+    #[Assert\DateTime(format: 'Y-m-d\TH:i')]
     public string $endsAt;
 
     #[Assert\NotBlank]
