@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { EventCreateForm } from "./components/EventCreateForm";
 import { fetchEvents, type EventItem } from "./api/events";
 import { EventList } from "./components/EventList";
+import { ErrorState } from "./components/ErrorState";
+import { LoadingState } from "./components/LoadingState";
+import { ApiError } from "./api/client";
 
 function App() {
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -16,8 +19,12 @@ function App() {
       const events = await fetchEvents();
 
       setEvents(events);
-    } catch {
-      setError("Could not load events.");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError("Could not load events.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -28,16 +35,16 @@ function App() {
   }, []);
 
   return (
-    <main style={{ padding: "2rem", fontFamily: "sans-serif" }}>
+    <main>
       <h1>Event Platform</h1>
 
       <div>
         <EventCreateForm onEventCreated={loadEvents} />
       </div>
 
-      {isLoading && <p>Loading events...</p>}
+      {isLoading && <LoadingState message="Loading events..." />}
 
-      {error && <p>{error}</p>}
+      {error && <ErrorState message={error} />}
 
       {!isLoading && !error && <EventList events={events} />}
     </main>

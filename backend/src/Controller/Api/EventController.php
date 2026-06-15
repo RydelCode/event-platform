@@ -32,6 +32,7 @@ final class EventController extends AbstractController
     public function create(
         Request $request,
         ValidatorInterface $validator,
+        ValidationErrorFormatter $validationErrorFormatter,
         CreateEventHandler $handler,
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
@@ -42,7 +43,7 @@ final class EventController extends AbstractController
 
         if (count($errors) > 0) {
             return $this->json([
-                'errors' => (string) $errors,
+                'errors' => $validationErrorFormatter->format($errors),
             ], Response::HTTP_BAD_REQUEST);
         }
 

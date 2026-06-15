@@ -3,6 +3,9 @@ import { useParams } from "react-router-dom";
 import { fetchEvent, type EventItem } from "../api/events";
 import { formatDate } from "../utils/date";
 import { EventRegistrationForm } from "../components/EventRegistrationForm";
+import { ApiError } from "../api/client";
+import { ErrorState } from "../components/ErrorState";
+import { LoadingState } from "../components/LoadingState";
 
 export function EventDetailsPage() {
   const { id } = useParams();
@@ -22,14 +25,20 @@ export function EventDetailsPage() {
         return;
       }
 
+      setIsLoading(true);
       setError(null);
+      setEvent(null);
 
       try {
         const event = await fetchEvent(Number(id));
 
         setEvent(event);
-      } catch {
-        setError("Could not load event.");
+      } catch (err) {
+        if (err instanceof ApiError) {
+          setError(err.message);
+        } else {
+          setError("Could not load event.");
+        }
       } finally {
         setIsLoading(false);
       }
@@ -39,11 +48,11 @@ export function EventDetailsPage() {
   }, [id]);
 
   if (isLoading) {
-    return <p>Loading event...</p>;
+    return <LoadingState message="Loading event..." />;
   }
 
   if (error) {
-    return <p>{error}</p>;
+    return <ErrorState message={error} />;
   }
 
   if (!event) {
@@ -51,7 +60,7 @@ export function EventDetailsPage() {
   }
 
   return (
-    <main style={{ padding: "2rem", fontFamily: "sans-serif" }}>
+    <main>
       <h1>{event.title}</h1>
 
       {event.description && <p>{event.description}</p>}
