@@ -117,8 +117,10 @@ export function EventCreateForm({ onEventCreated }: EventCreateFormProps) {
         {isSubmitting ? "Creating..." : "Create event"}
       </button>
 
-      {errorMessage && !hasValidationErrors(validationErrors) && <p>{errorMessage}</p>}
-      {successMessage && <p>{successMessage}</p>}
+      {errorMessage && !hasValidationErrors(validationErrors) && (
+        <p className="error-message">{errorMessage}</p>
+      )}
+      {successMessage && <p className="success-message">{successMessage}</p>}
     </form>
   );
 }

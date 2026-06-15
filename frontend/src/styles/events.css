@@ -1,0 +1,23 @@
+.event-list {
+  display: grid;
+  gap: 1.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.event-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.event-card-details {
+    margin-bottom: 2rem;
+}
+
+.event-card h2 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { fetchEvent, type EventItem } from "../api/events";
 import { formatDate } from "../utils/date";
 import { EventRegistrationForm } from "../components/EventRegistrationForm";
@@ -61,25 +61,30 @@ export function EventDetailsPage() {
 
   return (
     <main>
-      <h1>{event.title}</h1>
+      <Link className="back-link" to="/">
+        ← Back to events
+      </Link>
+      <div className="event-card event-card-details">
+        <h1>{event.title}</h1>
 
-      {event.description && <p>{event.description}</p>}
+        {event.description && <p>{event.description}</p>}
 
-      <p>
-        <strong>Starts at: </strong> {formatDate(event.startsAt)}
-      </p>
+        <p>
+          <strong>Starts at: </strong> {formatDate(event.startsAt)}
+        </p>
 
-      <p>
-        <strong>Ends at: </strong> {formatDate(event.endsAt)}
-      </p>
+        <p>
+          <strong>Ends at: </strong> {formatDate(event.endsAt)}
+        </p>
 
-      <p>
-        <strong>Location: </strong> {event.location}
-      </p>
+        <p>
+          <strong>Location: </strong> {event.location}
+        </p>
 
-      <p>
-        <strong>Capacity: </strong> {event.capacity}
-      </p>
+        <p>
+          <strong>Capacity: </strong> {event.capacity}
+        </p>
+      </div>
 
       <EventRegistrationForm eventId={event.id} />
     </main>
