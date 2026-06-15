@@ -1,0 +1,13 @@
+.error-message {
+  color: #dc2626;
+}
+
+.success-message {
+  color: #16a34a;
+}
+
+.validation-error {
+  color: #dc2626;
+  font-size: 0.9rem;
+  margin-top: 0;
+}

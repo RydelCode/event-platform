@@ -12,9 +12,9 @@ export function EventList({ events }: EventListProps) {
   }
 
   return (
-    <ul>
+    <ul className="event-list">
       {events.map((event) => (
-        <li key={event.id}>
+        <li className="event-card" key={event.id}>
           <h2>{event.title}</h2>
 
           <p>{event.description}</p>
@@ -27,7 +27,9 @@ export function EventList({ events }: EventListProps) {
             <strong>Capacity:</strong> {event.capacity}
           </p>
 
-          <Link to={routes.eventDetails(event.id)}>View Details</Link>
+          <Link className="button-link" to={routes.eventDetails(event.id)}>
+            View details
+          </Link>
         </li>
       ))}
     </ul>

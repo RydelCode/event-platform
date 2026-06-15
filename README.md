@@ -1,131 +1,274 @@
 # Event Platform
 
-Event Platform is a full-stack event management and booking platform built with Symfony, React, PostgreSQL, Docker, and Azure.
+Event Platform is a full-stack event management application built with Symfony, React, PostgreSQL, and RabbitMQ.
 
-The project serves both as a portfolio application and a backend/frontend engineering learning platform focused on real-world architecture, scalability, and infrastructure concepts.
+The project serves both as a portfolio application and a playground for learning production-oriented backend and full-stack engineering concepts such as asynchronous processing, transactional consistency, pessimistic locking, validation, testing, and modern frontend development.
 
-## Current Features
+---
 
-- Dockerized local development environment
-- Symfony REST API backend
-- React + TypeScript frontend
-- PostgreSQL database integration
-- Event entity with Doctrine migrations
-- Event listing API endpoint
-- Frontend integration with backend API
+## Features
 
-## Planned Features
+### Events
 
-### Backend
-- Event creation and editing
+- List all events
+- View event details
+- Create new events
 - DTO-based request handling
-- Validation and error handling
-- Registration system
-- Capacity management
-- Queue processing with Symfony Messenger
-- Async notifications and reminders
-- Query optimization and N+1 mitigation
+- Request validation using Symfony Validator
+
+### Event Registration
+
+- Register attendees for events
+- Duplicate registration prevention
+- Event capacity validation
+- User-friendly validation and error handling
+
+### Asynchronous Processing
+
+Registration confirmation emails are processed asynchronously using Symfony Messenger and RabbitMQ.
+
+Implemented features:
+
+- RabbitMQ integration
+- Symfony Messenger
 - Background workers
-- Caching strategies
-- File uploads and ticket generation
+- Retry strategy
+- Failed message transport
+- Message recovery commands
 
-### Frontend
-- Event listing and details pages
-- Event creation forms
-- Routing and layouts
-- Form validation
-- Async API handling
-- Loading and error states
-- Component architecture improvements
+### Concurrency Protection
 
-### Infrastructure
-- Azure deployment
-- CI/CD pipelines
-- Staging and production environments
-- Blob storage integration
-- Monitoring and logging
-- Secret management
+The registration process is protected against race conditions.
+
+Implemented using:
+
+- Database transactions
+- Pessimistic locking (`PESSIMISTIC_WRITE`)
+- Transactional registration flow
+
+This prevents overbooking and duplicate registrations when multiple users register simultaneously.
+
+### Testing
+
+Functional API tests cover:
+
+- Event listing
+- Event details
+- Missing events
+- Event creation
+- Validation errors
+- Event registration
+- Capacity limits
+- Duplicate registrations
+
+---
 
 ## Tech Stack
 
 ### Backend
-- PHP 8.3
+
+- PHP 8.4
 - Symfony 7
 - Doctrine ORM
 - PostgreSQL
+- Symfony Messenger
+- Symfony Mailer
+- Twig
+- PHPUnit
 
 ### Frontend
+
 - React
 - TypeScript
 - Vite
-- Axios
 - React Router
+- Axios
 
 ### Infrastructure
+
 - Docker
-- Azure (planned)
+- RabbitMQ
+
+---
 
 ## Architecture
 
+### Backend
+
+The backend follows a feature-based architecture.
+
 ```text
-React Frontend
-       ↓
-Symfony REST API
-       ↓
-PostgreSQL
+Application/
+└── Event/
+    ├── CreateEvent/
+    ├── GetEventDetails/
+    ├── ListEvents/
+    └── RegisterForEvent/
 ```
+
+Controllers remain intentionally thin and are responsible for:
+
+```text
+Request
+↓
+DTO
+↓
+Handler
+↓
+Response
+```
+
+Business logic lives inside application handlers.
+
+---
+
+## Registration Flow
+
+```text
+User submits registration
+            ↓
+RegisterForEventHandler
+            ↓
+Transaction starts
+            ↓
+Event row lock acquired
+            ↓
+Capacity validation
+            ↓
+Duplicate email validation
+            ↓
+Registration saved
+            ↓
+Transaction committed
+            ↓
+RegistrationCreated message dispatched
+            ↓
+RabbitMQ
+            ↓
+Messenger Worker
+            ↓
+RegistrationCreatedHandler
+            ↓
+Confirmation email sent
+```
+
+---
+
+## Screenshots
+
+### Event Create Form
+
+![Event Create Form](image-1.png)
+
+### Event List
+
+![Event List](image.png)
+
+### Event Details
+
+![Event Details](image-2.png)
+
+### Registration Form
+
+![Registration Form](image-3.png)
+
+---
 
 ## Local Development
 
 ### Requirements
+
 - Docker Desktop
-- WSL2
 - Node.js (LTS)
 - npm
 
+### Start Infrastructure
 
-### Start Docker containers
-```
+```bash
 docker compose up -d --build
 ```
 
-### Start Symfony backend
+### Backend
 
-```
+```bash
 docker compose exec php bash
+
 cd /app/backend
-php -S 0.0.0.0:8000 -t public
+
+composer install
+
+php bin/console doctrine:migrations:migrate
 ```
 
-Backend available at:
+Backend API:
 
-```
+```text
 http://localhost:8000
 ```
 
-### Start React frontend
+### Frontend
 
-```
+```bash
 cd frontend
+
 npm install
+
 npm run dev
 ```
 
-Frontend available at:
+Frontend:
 
-```
+```text
 http://localhost:5173
 ```
 
-### Learning Goals
+### RabbitMQ UI
 
-This project is intentionally designed to explore:
+```text
+http://localhost:15672
+```
 
-- Full-stack application architecture
-- Advanced Symfony backend concepts
-- React application structure
-- Queueing and background workers
-- Database optimization and N+1 mitigation
-- Concurrency and transactions
-- CI/CD and cloud deployment
-- Production-oriented development practices
+Credentials:
+
+```text
+guest
+guest
+```
+
+---
+
+## Environment Variables
+
+### Backend
+
+```env
+APP_ENV=dev
+
+DATABASE_URL=
+
+MAILER_DSN=
+
+MESSENGER_TRANSPORT_DSN=
+
+MESSENGER_FAILED_TRANSPORT_DSN=
+```
+
+### Frontend
+
+```env
+VITE_API_BASE_URL=http://localhost:8000
+```
+
+---
+
+## Future Improvements
+
+- Authentication and authorization
+- Organizer accounts
+- Event ownership
+- QR code check-in
+- Redis caching
+- Dashboard / administration panel
+- Azure deployment
+- CI/CD pipelines
+- Monitoring and logging

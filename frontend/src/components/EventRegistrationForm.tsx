@@ -2,6 +2,8 @@ import React, { useState } from "react";
 
 import { registerForEvent, type RegisterForEventPayload } from "../api/events";
 import { ApiError } from "../api/client";
+import { hasValidationErrors } from "../utils/validation";
+import { ValidationErrors } from "./ValidationErrors";
 
 type EventRegistrationFormProps = {
   eventId: number;
@@ -32,13 +34,12 @@ export function EventRegistrationForm({ eventId }: EventRegistrationFormProps) {
 
       setSuccessMessage(response.message);
       setFormData(initialFormData);
-    } catch (error) {
-      if (error instanceof ApiError) {
-        setErrorMessage(error.message);
-        setValidationErrors(error.errors ?? {});
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setErrorMessage(err.message);
+        setValidationErrors(err.errors ?? {});
         return;
       }
-
       setErrorMessage("Could not register for event.");
     } finally {
       setIsSubmitting(false);
@@ -67,9 +68,7 @@ export function EventRegistrationForm({ eventId }: EventRegistrationFormProps) {
           value={formData.attendeeName}
           onChange={handleChange}
         />
-        {validationErrors.attendeeName?.map((message) => (
-          <p key={message}>{message}</p>
-        ))}
+        <ValidationErrors errors={validationErrors.attendeeName} />
       </div>
 
       <div>
@@ -81,17 +80,17 @@ export function EventRegistrationForm({ eventId }: EventRegistrationFormProps) {
           value={formData.attendeeEmail}
           onChange={handleChange}
         />
-        {validationErrors.attendeeEmail?.map((message) => (
-          <p key={message}>{message}</p>
-        ))}
+        <ValidationErrors errors={validationErrors.attendeeEmail} />
       </div>
 
       <button type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Registering..." : "Register for event"}
       </button>
 
-      {errorMessage && <p>{errorMessage}</p>}
-      {successMessage && <p>{successMessage}</p>}
+      {errorMessage && !hasValidationErrors(validationErrors) && (
+        <p className="error-message">{errorMessage}</p>
+      )}
+      {successMessage && <p className="success-message">{successMessage}</p>}
     </form>
   );
 }
