@@ -235,7 +235,28 @@ guest
 guest
 ```
 
+## Running Background Workers
+
+Start the Messenger worker:
+
+```bash
+docker compose exec php php bin/console messenger:consume async -vv
+```
+
+The worker is responsible for processing asynchronous tasks such as registration confirmation emails.
+
 ---
+
+## Environment Setup
+
+Copy the example environment files:
+
+```bash
+cp backend/.env.example backend/.env.local
+cp frontend/.env.example frontend/.env
+```
+
+The default values are configured for the provided Docker environment and should work without additional changes.
 
 ## Environment Variables
 
@@ -244,13 +265,13 @@ guest
 ```env
 APP_ENV=dev
 
-DATABASE_URL=
+DATABASE_URL="postgresql://event_user:event_password@postgres:5432/event_platform?serverVersion=16&charset=utf8"
 
-MAILER_DSN=
+MAILER_DSN=null://null
 
-MESSENGER_TRANSPORT_DSN=
+MESSENGER_TRANSPORT_DSN=amqp://guest:guest@rabbitmq:5672/%2f/messages
 
-MESSENGER_FAILED_TRANSPORT_DSN=
+MESSENGER_FAILED_TRANSPORT_DSN=doctrine://default?queue_name=failed
 ```
 
 ### Frontend
