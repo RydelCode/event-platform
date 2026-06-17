@@ -12,8 +12,8 @@ final class EventApiTest extends WebTestCase
     private const EVENT_CREATE_TEST_CASE = [
         'title' => 'Test Event',
         'description' => 'Created from functional test',
-        'startsAt' => '2026-06-01T10:00:00+00:00',
-        'endsAt' => '2026-06-01T15:00:00+00:00',
+        'startsAt' => '2026-06-01T10:00',
+        'endsAt' => '2026-06-01T15:00',
         'location' => 'Warsaw',
         'capacity' => 100,
     ];
@@ -111,14 +111,14 @@ final class EventApiTest extends WebTestCase
         $laterEvent = $this->createEvent($client, [
             ...self::EVENT_CREATE_TEST_CASE,
             'title' => 'Later Test Event',
-            'startsAt' => '2026-06-03T10:00:00+00:00',
-            'endsAt' => '2026-06-03T15:00:00+00:00',
+            'startsAt' => '2026-06-03T10:00',
+            'endsAt' => '2026-06-03T15:00',
         ]);
         $earlierEvent = $this->createEvent($client, [
             ...self::EVENT_CREATE_TEST_CASE,
             'title' => 'Earlier Test Event',
-            'startsAt' => '2026-06-02T10:00:00+00:00',
-            'endsAt' => '2026-06-02T15:00:00+00:00',
+            'startsAt' => '2026-06-02T10:00',
+            'endsAt' => '2026-06-02T15:00',
         ]);
 
         $client->request('GET', '/api/events');

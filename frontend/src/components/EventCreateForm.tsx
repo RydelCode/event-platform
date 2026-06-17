@@ -44,7 +44,6 @@ export function EventCreateForm({ onEventCreated }: EventCreateFormProps) {
       if (err instanceof ApiError) {
         setErrorMessage(err.message);
         setValidationErrors(err.errors ?? {});
-        console.log(err);
         return;
       }
 
