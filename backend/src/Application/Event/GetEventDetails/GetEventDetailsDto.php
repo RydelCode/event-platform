@@ -25,8 +25,8 @@ final readonly class GetEventDetailsDto
             $event->getId(),
             $event->getTitle(),
             $event->getDescription(),
-            $event->getStartsAt()->format(DATE_ATOM),
-            $event->getEndsAt()->format(DATE_ATOM),
+            $event->getStartsAt()->format('Y-m-d\TH:i'),
+            $event->getEndsAt()->format('Y-m-d\TH:i'),
             $event->getLocation(),
             $event->getCapacity()
         );

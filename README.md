@@ -198,6 +198,8 @@ cd /app/backend
 composer install
 
 php bin/console doctrine:migrations:migrate
+
+php -S 0.0.0.0:8000 -t public
 ```
 
 Backend API:
@@ -244,6 +246,30 @@ docker compose exec php php bin/console messenger:consume async -vv
 ```
 
 The worker is responsible for processing asynchronous tasks such as registration confirmation emails.
+
+---
+
+## Running Tests
+
+Backend tests should be run from inside the PHP container so the required PHP extensions and Docker service hostnames are available:
+
+```bash
+docker compose exec php bash
+
+cd /app/backend
+
+php bin/phpunit
+```
+
+Frontend checks can be run from the frontend directory:
+
+```bash
+cd frontend
+
+npm run lint
+
+npm run build
+```
 
 ---
 
