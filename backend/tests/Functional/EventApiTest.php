@@ -208,6 +208,20 @@ final class EventApiTest extends WebTestCase
         self::assertSame('Email already registered for the event', $response['message']);
     }
 
+    public function testCannotRegisterForDraftEvent(): void
+    {
+        $client = static::createClient();
+
+        $createdDraftEventData = $this->createEvent($client, [...self::EVENT_CREATE_TEST_CASE]);
+
+        $this->postJson($client, sprintf('/api/events/%d/registrations', $createdDraftEventData['id']), self::REGISTRATION_CREATE_TEST_CASE);
+
+        $response = $this->decodeJsonResponse($client);
+
+        $this->assertResponseStatusCodeSame(409);
+        self::assertSame('Event is not open for registration', $response['message']);
+    }
+
     private function createEvent(KernelBrowser $client, array $payload): array
     {
         $this->postJson($client, '/api/events', $payload);

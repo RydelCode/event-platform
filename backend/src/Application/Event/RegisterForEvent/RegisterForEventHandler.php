@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Event\RegisterForEvent;
 
 use App\Application\Event\RegisterForEvent\Message\RegistrationCreated;
+use App\Domain\Event\EventStatus;
 use App\Entity\Registration;
 use App\Repository\EventRepository;
 use App\Repository\RegistrationRepository;
@@ -29,6 +30,10 @@ final readonly class RegisterForEventHandler
 
             if (null === $event) {
                 return null;
+            }
+
+            if (EventStatus::PUBLISHED !== $event->getStatus()) {
+                throw new EventNotPublishedException($eventId);
             }
 
             if ($event->getRegistrations()->count() >= $event->getCapacity()) {

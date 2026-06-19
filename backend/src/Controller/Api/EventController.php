@@ -10,6 +10,7 @@ use App\Application\Event\GetEventDetails\GetEventDetailsHandler;
 use App\Application\Event\ListEvents\ListEventsHandler;
 use App\Application\Event\RegisterForEvent\DuplicateRegistrationDetectedException;
 use App\Application\Event\RegisterForEvent\EventCapacityExceededException;
+use App\Application\Event\RegisterForEvent\EventNotPublishedException;
 use App\Application\Event\RegisterForEvent\RegisterForEventDto;
 use App\Application\Event\RegisterForEvent\RegisterForEventHandler;
 use App\Infrastructure\Http\ValidationErrorFormatter;
@@ -94,6 +95,10 @@ final class EventController extends AbstractController
 
         try {
             $registration = $handler->handle($id, $dto);
+        } catch (EventNotPublishedException) {
+            return $this->json([
+                'message' => 'Event is not open for registration',
+            ], Response::HTTP_CONFLICT);
         } catch (EventCapacityExceededException) {
             return $this->json([
                 'message' => 'Event is full',
