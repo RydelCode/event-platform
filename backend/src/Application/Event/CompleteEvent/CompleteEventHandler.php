@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Event\PublishEvent;
+namespace App\Application\Event\CompleteEvent;
 
 use App\Application\Event\EventTransitionHandler;
 use App\Entity\Event;
@@ -11,7 +11,7 @@ use App\Repository\EventRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 
-final readonly class PublishEventHandler implements EventTransitionHandler
+final readonly class CompleteEventHandler implements EventTransitionHandler
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
@@ -28,7 +28,7 @@ final readonly class PublishEventHandler implements EventTransitionHandler
             return null;
         }
 
-        $event->publish();
+        $event->complete();
 
         $this->entityManager->flush();
 
