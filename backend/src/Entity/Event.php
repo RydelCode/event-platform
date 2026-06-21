@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Domain\Event\EventCannotBePublishedException;
 use App\Domain\Event\EventStatus;
 use App\Repository\EventRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -64,6 +65,15 @@ class Event
     public function getStatus(): EventStatus
     {
         return $this->status;
+    }
+
+    public function publish(): void
+    {
+        if (EventStatus::DRAFT !== $this->status) {
+            throw new EventCannotBePublishedException();
+        }
+
+        $this->status = EventStatus::PUBLISHED;
     }
 
     public function getTitle(): ?string

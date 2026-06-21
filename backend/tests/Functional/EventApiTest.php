@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional;
 
+use App\Domain\Event\EventStatus;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -97,11 +98,22 @@ final class EventApiTest extends WebTestCase
 
         self::assertSame($createdEventData['id'], $eventDetails['id']);
         self::assertSame(self::EVENT_CREATE_TEST_CASE['title'], $eventDetails['title']);
+        self::assertSame(EventStatus::DRAFT->value, $eventDetails['status']);
         self::assertSame(self::EVENT_CREATE_TEST_CASE['description'], $eventDetails['description']);
         self::assertSame(self::EVENT_CREATE_TEST_CASE['startsAt'], $eventDetails['startsAt']);
         self::assertSame(self::EVENT_CREATE_TEST_CASE['endsAt'], $eventDetails['endsAt']);
         self::assertSame(self::EVENT_CREATE_TEST_CASE['location'], $eventDetails['location']);
         self::assertSame(self::EVENT_CREATE_TEST_CASE['capacity'], $eventDetails['capacity']);
+    }
+
+    public function testPublishEventReturnsValidResponse(): void
+    {
+        $client = static::createClient();
+
+        $createdEventData = $this->createEvent($client, self::EVENT_CREATE_TEST_CASE);
+        $this->publishEvent($client, $createdEventData['id']);
+
+        self::assertResponseIsSuccessful();
     }
 
     public function testCreatedEventsAreReturnedInListOrderedByStartDate(): void
@@ -140,6 +152,7 @@ final class EventApiTest extends WebTestCase
         $client = static::createClient();
 
         $createdEventData = $this->createEvent($client, self::EVENT_CREATE_TEST_CASE);
+        $this->publishEvent($client, $createdEventData['id']);
 
         $this->postJson($client, sprintf('/api/events/%d/registrations', $createdEventData['id']), self::REGISTRATION_CREATE_TEST_CASE);
 
@@ -166,6 +179,7 @@ final class EventApiTest extends WebTestCase
         $client = static::createClient();
 
         $createdEventData = $this->createEvent($client, self::EVENT_CREATE_TEST_CASE);
+        $this->publishEvent($client, $createdEventData['id']);
 
         $this->postJson($client, sprintf('/api/events/%d/registrations', $createdEventData['id']), []);
 
@@ -177,6 +191,7 @@ final class EventApiTest extends WebTestCase
         $client = static::createClient();
 
         $createdEventData = $this->createEvent($client, [...self::EVENT_CREATE_TEST_CASE, 'capacity' => 1]);
+        $this->publishEvent($client, $createdEventData['id']);
 
         $this->postJson($client, sprintf('/api/events/%d/registrations', $createdEventData['id']), self::REGISTRATION_CREATE_TEST_CASE);
 
@@ -195,6 +210,7 @@ final class EventApiTest extends WebTestCase
         $client = static::createClient();
 
         $createdEventData = $this->createEvent($client, [...self::EVENT_CREATE_TEST_CASE]);
+        $this->publishEvent($client, $createdEventData['id']);
 
         $this->postJson($client, sprintf('/api/events/%d/registrations', $createdEventData['id']), self::REGISTRATION_CREATE_TEST_CASE);
 
@@ -222,6 +238,22 @@ final class EventApiTest extends WebTestCase
         self::assertSame('Event is not open for registration', $response['message']);
     }
 
+    public function testCannotPublishNotDraftEvent(): void
+    {
+        $client = static::createClient();
+
+        $createdPublishedEventData = $this->createEvent($client, [...self::EVENT_CREATE_TEST_CASE]);
+
+        $this->publishEvent($client, $createdPublishedEventData['id']);
+
+        $this->postJson($client, sprintf('/api/events/%d/publish', $createdPublishedEventData['id']), []);
+
+        $response = $this->decodeJsonResponse($client);
+
+        $this->assertResponseStatusCodeSame(409);
+        self::assertSame('Event cannot be published', $response['message']);
+    }
+
     private function createEvent(KernelBrowser $client, array $payload): array
     {
         $this->postJson($client, '/api/events', $payload);
@@ -229,6 +261,13 @@ final class EventApiTest extends WebTestCase
         self::assertResponseStatusCodeSame(201);
 
         return $this->decodeJsonResponse($client);
+    }
+
+    private function publishEvent(KernelBrowser $client, int $eventId): void
+    {
+        $this->postJson($client, sprintf('/api/events/%d/publish', $eventId), []);
+
+        self::assertResponseIsSuccessful();
     }
 
     private function postJson(KernelBrowser $client, string $uri, array $payload): void
