@@ -24,6 +24,11 @@ class EventRepository extends ServiceEntityRepository
         return $this->find($eventId, LockMode::PESSIMISTIC_WRITE);
     }
 
+    public function getById(int $id): ?Event
+    {
+        return $this->find($id);
+    }
+
     //    /**
     //     * @return Event[] Returns an array of Event objects
     //     */

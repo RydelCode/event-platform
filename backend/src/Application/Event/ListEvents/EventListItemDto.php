@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Event\ListEvents;
 
+use App\Domain\Event\EventStatus;
 use App\Entity\Event;
 
 final readonly class EventListItemDto
@@ -11,6 +12,7 @@ final readonly class EventListItemDto
     public function __construct(
         public int $id,
         public string $title,
+        public EventStatus $status,
         public ?string $description,
         public string $startsAt,
         public string $endsAt,
@@ -24,6 +26,7 @@ final readonly class EventListItemDto
         return new self(
             $event->getId(),
             $event->getTitle(),
+            $event->getStatus(),
             $event->getDescription(),
             $event->getStartsAt()->format(DATE_ATOM),
             $event->getEndsAt()->format(DATE_ATOM),

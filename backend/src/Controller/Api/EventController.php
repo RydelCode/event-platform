@@ -8,10 +8,13 @@ use App\Application\Event\CreateEvent\CreateEventDto;
 use App\Application\Event\CreateEvent\CreateEventHandler;
 use App\Application\Event\GetEventDetails\GetEventDetailsHandler;
 use App\Application\Event\ListEvents\ListEventsHandler;
+use App\Application\Event\PublishEvent\PublishEventHandler;
 use App\Application\Event\RegisterForEvent\DuplicateRegistrationDetectedException;
 use App\Application\Event\RegisterForEvent\EventCapacityExceededException;
+use App\Application\Event\RegisterForEvent\EventNotPublishedException;
 use App\Application\Event\RegisterForEvent\RegisterForEventDto;
 use App\Application\Event\RegisterForEvent\RegisterForEventHandler;
+use App\Domain\Event\EventCannotBePublishedException;
 use App\Infrastructure\Http\ValidationErrorFormatter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -94,6 +97,10 @@ final class EventController extends AbstractController
 
         try {
             $registration = $handler->handle($id, $dto);
+        } catch (EventNotPublishedException) {
+            return $this->json([
+                'message' => 'Event is not open for registration',
+            ], Response::HTTP_CONFLICT);
         } catch (EventCapacityExceededException) {
             return $this->json([
                 'message' => 'Event is full',
@@ -114,5 +121,30 @@ final class EventController extends AbstractController
             'message' => 'Registration created',
             'id' => $registration->getId(),
         ], Response::HTTP_CREATED);
+    }
+
+    #[Route('/api/events/{id}/publish', name: 'api_events_publish', methods: ['POST'])]
+    public function publish(
+        int $id,
+        PublishEventHandler $handler,
+    ): JsonResponse {
+        try {
+            $event = $handler->handle($id);
+        } catch (EventCannotBePublishedException) {
+            return $this->json([
+                'message' => 'Event cannot be published',
+            ], Response::HTTP_CONFLICT);
+        }
+
+        if (null === $event) {
+            return $this->json([
+                'message' => 'No event found with ID: '.$id,
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->json([
+            'message' => 'Event published',
+            'id' => $event->getId(),
+        ], Response::HTTP_OK);
     }
 }

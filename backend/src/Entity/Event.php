@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Domain\Event\EventCannotBePublishedException;
+use App\Domain\Event\EventStatus;
 use App\Repository\EventRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -17,6 +19,9 @@ class Event
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
+
+    #[ORM\Column(enumType: EventStatus::class)]
+    private EventStatus $status;
 
     #[ORM\Column(length: 255)]
     private ?string $title = null;
@@ -49,11 +54,26 @@ class Event
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->registrations = new ArrayCollection();
+        $this->status = EventStatus::DRAFT;
     }
 
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getStatus(): EventStatus
+    {
+        return $this->status;
+    }
+
+    public function publish(): void
+    {
+        if (EventStatus::DRAFT !== $this->status) {
+            throw new EventCannotBePublishedException();
+        }
+
+        $this->status = EventStatus::PUBLISHED;
     }
 
     public function getTitle(): ?string
