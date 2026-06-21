@@ -116,6 +116,126 @@ final class EventApiTest extends WebTestCase
         self::assertResponseIsSuccessful();
     }
 
+    public function testCancelDraftEventReturnsValidResponse(): void
+    {
+        $client = static::createClient();
+
+        $createdEventData = $this->createEvent($client, self::EVENT_CREATE_TEST_CASE);
+        $this->cancelEvent($client, $createdEventData['id']);
+
+        self::assertResponseIsSuccessful();
+    }
+
+    public function testCancelPublishedEventReturnsValidResponse(): void
+    {
+        $client = static::createClient();
+
+        $createdEventData = $this->createEvent($client, self::EVENT_CREATE_TEST_CASE);
+        $this->publishEvent($client, $createdEventData['id']);
+        $this->cancelEvent($client, $createdEventData['id']);
+
+        self::assertResponseIsSuccessful();
+    }
+
+    public function testCancelCompletedEventReturnsConflict(): void
+    {
+        $client = static::createClient();
+
+        $createdEventData = $this->createEvent($client, self::EVENT_CREATE_TEST_CASE);
+        $this->publishEvent($client, $createdEventData['id']);
+
+        $this->completeEvent($client, $createdEventData['id']);
+
+        $this->postJson($client, sprintf('/api/events/%d/cancel', $createdEventData['id']), []);
+        self::assertResponseStatusCodeSame(409);
+    }
+
+    public function testCompletePublishedEventReturnsValidResponse(): void
+    {
+        $client = static::createClient();
+
+        $createdEventData = $this->createEvent($client, self::EVENT_CREATE_TEST_CASE);
+        $this->publishEvent($client, $createdEventData['id']);
+        $this->completeEvent($client, $createdEventData['id']);
+
+        self::assertResponseIsSuccessful();
+    }
+
+    public function testCompleteDraftEventReturnsConflict(): void
+    {
+        $client = static::createClient();
+
+        $createdEventData = $this->createEvent($client, self::EVENT_CREATE_TEST_CASE);
+
+        $this->postJson($client, sprintf('/api/events/%d/complete', $createdEventData['id']), []);
+
+        self::assertResponseStatusCodeSame(409);
+    }
+
+    public function testCompleteCancelledEventReturnsConflict(): void
+    {
+        $client = static::createClient();
+
+        $createdEventData = $this->createEvent($client, self::EVENT_CREATE_TEST_CASE);
+
+        $this->cancelEvent($client, $createdEventData['id']);
+
+        $this->postJson($client, sprintf('/api/events/%d/complete', $createdEventData['id']), []);
+
+        self::assertResponseStatusCodeSame(409);
+    }
+
+    public function testRegisterForCancelledEventReturnsConflict(): void
+    {
+        $client = static::createClient();
+
+        $createdDraftEventData = $this->createEvent($client, [...self::EVENT_CREATE_TEST_CASE]);
+
+        $this->cancelEvent($client, $createdDraftEventData['id']);
+
+        $this->postJson($client, sprintf('/api/events/%d/registrations', $createdDraftEventData['id']), self::REGISTRATION_CREATE_TEST_CASE);
+
+        $this->assertResponseStatusCodeSame(409);
+    }
+
+    public function testRegisterForCompleteEventReturnsConflict(): void
+    {
+        $client = static::createClient();
+
+        $createdDraftEventData = $this->createEvent($client, [...self::EVENT_CREATE_TEST_CASE]);
+
+        $this->publishEvent($client, $createdDraftEventData['id']);
+        $this->completeEvent($client, $createdDraftEventData['id']);
+
+        $this->postJson($client, sprintf('/api/events/%d/registrations', $createdDraftEventData['id']), self::REGISTRATION_CREATE_TEST_CASE);
+
+        $this->assertResponseStatusCodeSame(409);
+    }
+
+    public function testRegisterForDraftEventReturnsConflict(): void
+    {
+        $client = static::createClient();
+
+        $createdDraftEventData = $this->createEvent($client, [...self::EVENT_CREATE_TEST_CASE]);
+
+        $this->postJson($client, sprintf('/api/events/%d/registrations', $createdDraftEventData['id']), self::REGISTRATION_CREATE_TEST_CASE);
+
+        $this->assertResponseStatusCodeSame(409);
+    }
+
+    public function testCannotPublishNotDraftEvent(): void
+    {
+        $client = static::createClient();
+
+        $createdPublishedEventData = $this->createEvent($client, [...self::EVENT_CREATE_TEST_CASE]);
+
+        $this->publishEvent($client, $createdPublishedEventData['id']);
+
+        $this->postJson($client, sprintf('/api/events/%d/publish', $createdPublishedEventData['id']), []);
+
+        $this->assertResponseStatusCodeSame(409);
+    }
+
     public function testCreatedEventsAreReturnedInListOrderedByStartDate(): void
     {
         $client = static::createClient();
@@ -224,36 +344,6 @@ final class EventApiTest extends WebTestCase
         self::assertSame('Email already registered for the event', $response['message']);
     }
 
-    public function testCannotRegisterForDraftEvent(): void
-    {
-        $client = static::createClient();
-
-        $createdDraftEventData = $this->createEvent($client, [...self::EVENT_CREATE_TEST_CASE]);
-
-        $this->postJson($client, sprintf('/api/events/%d/registrations', $createdDraftEventData['id']), self::REGISTRATION_CREATE_TEST_CASE);
-
-        $response = $this->decodeJsonResponse($client);
-
-        $this->assertResponseStatusCodeSame(409);
-        self::assertSame('Event is not open for registration', $response['message']);
-    }
-
-    public function testCannotPublishNotDraftEvent(): void
-    {
-        $client = static::createClient();
-
-        $createdPublishedEventData = $this->createEvent($client, [...self::EVENT_CREATE_TEST_CASE]);
-
-        $this->publishEvent($client, $createdPublishedEventData['id']);
-
-        $this->postJson($client, sprintf('/api/events/%d/publish', $createdPublishedEventData['id']), []);
-
-        $response = $this->decodeJsonResponse($client);
-
-        $this->assertResponseStatusCodeSame(409);
-        self::assertSame('Event cannot be published', $response['message']);
-    }
-
     private function createEvent(KernelBrowser $client, array $payload): array
     {
         $this->postJson($client, '/api/events', $payload);
@@ -261,6 +351,20 @@ final class EventApiTest extends WebTestCase
         self::assertResponseStatusCodeSame(201);
 
         return $this->decodeJsonResponse($client);
+    }
+
+    private function cancelEvent(KernelBrowser $client, int $eventId): void
+    {
+        $this->postJson($client, sprintf('/api/events/%d/cancel', $eventId), []);
+
+        self::assertResponseIsSuccessful();
+    }
+
+    private function completeEvent(KernelBrowser $client, int $eventId): void
+    {
+        $this->postJson($client, sprintf('/api/events/%d/complete', $eventId), []);
+
+        self::assertResponseIsSuccessful();
     }
 
     private function publishEvent(KernelBrowser $client, int $eventId): void

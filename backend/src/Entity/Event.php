@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Domain\Event\EventCannotBeCancelledException;
+use App\Domain\Event\EventCannotBeCompletedException;
 use App\Domain\Event\EventCannotBePublishedException;
 use App\Domain\Event\EventStatus;
 use App\Repository\EventRepository;
@@ -74,6 +76,25 @@ class Event
         }
 
         $this->status = EventStatus::PUBLISHED;
+    }
+
+    public function cancel(): void
+    {
+        if (EventStatus::COMPLETED === $this->status
+        || EventStatus::CANCELLED === $this->status) {
+            throw new EventCannotBeCancelledException();
+        }
+
+        $this->status = EventStatus::CANCELLED;
+    }
+
+    public function complete(): void
+    {
+        if (EventStatus::PUBLISHED !== $this->status) {
+            throw new EventCannotBeCompletedException();
+        }
+
+        $this->status = EventStatus::COMPLETED;
     }
 
     public function getTitle(): ?string
