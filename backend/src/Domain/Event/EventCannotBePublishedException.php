@@ -8,6 +8,6 @@ final class EventCannotBePublishedException extends \RuntimeException
 {
     public function __construct()
     {
-        parent::__construct('Event %d cannot be published.');
+        parent::__construct('Event cannot be published.');
     }
 }
