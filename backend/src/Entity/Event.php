@@ -26,25 +26,25 @@ class Event
     private EventStatus $status;
 
     #[ORM\Column(length: 255)]
-    private ?string $title = null;
+    private string $title;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $startsAt = null;
+    private \DateTimeImmutable $startsAt;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $endsAt = null;
+    private \DateTimeImmutable $endsAt;
 
     #[ORM\Column(length: 255)]
-    private ?string $location = null;
+    private string $location;
 
     #[ORM\Column]
-    private ?int $capacity = null;
+    private int $capacity;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
+    private \DateTimeImmutable $createdAt;
 
     /**
      * @var Collection<int, Registration>
@@ -59,8 +59,12 @@ class Event
         $this->status = EventStatus::DRAFT;
     }
 
-    public function getId(): ?int
+    public function getId(): int
     {
+        if (null === $this->id) {
+            throw new \LogicException('Event ID is not set');
+        }
+
         return $this->id;
     }
 
@@ -97,7 +101,7 @@ class Event
         $this->status = EventStatus::COMPLETED;
     }
 
-    public function getTitle(): ?string
+    public function getTitle(): string
     {
         return $this->title;
     }
@@ -121,7 +125,7 @@ class Event
         return $this;
     }
 
-    public function getStartsAt(): ?\DateTimeImmutable
+    public function getStartsAt(): \DateTimeImmutable
     {
         return $this->startsAt;
     }
@@ -133,7 +137,7 @@ class Event
         return $this;
     }
 
-    public function getEndsAt(): ?\DateTimeImmutable
+    public function getEndsAt(): \DateTimeImmutable
     {
         return $this->endsAt;
     }
@@ -145,7 +149,7 @@ class Event
         return $this;
     }
 
-    public function getLocation(): ?string
+    public function getLocation(): string
     {
         return $this->location;
     }
@@ -157,7 +161,7 @@ class Event
         return $this;
     }
 
-    public function getCapacity(): ?int
+    public function getCapacity(): int
     {
         return $this->capacity;
     }
@@ -169,7 +173,7 @@ class Event
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }
@@ -201,12 +205,7 @@ class Event
 
     public function removeRegistration(Registration $registration): static
     {
-        if ($this->registrations->removeElement($registration)) {
-            // set the owning side to null (unless already changed)
-            if ($registration->getEvent() === $this) {
-                $registration->setEvent(null);
-            }
-        }
+        $this->registrations->removeElement($registration);
 
         return $this;
     }
