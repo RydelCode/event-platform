@@ -17,6 +17,9 @@ class RegisterForEventDto
     #[Assert\Length(max: 255)]
     public string $attendeeEmail;
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public static function fromArray(array $data): self
     {
         $dto = new self();

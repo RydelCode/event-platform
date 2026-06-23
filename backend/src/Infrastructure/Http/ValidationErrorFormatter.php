@@ -8,12 +8,15 @@ use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 final readonly class ValidationErrorFormatter
 {
+    /**
+     * @return array<string, string[]>
+     */
     public function format(ConstraintViolationListInterface $errors): array
     {
         $formattedErrors = [];
 
         foreach ($errors as $error) {
-            $formattedErrors[$error->getPropertyPath()][] = $error->getMessage();
+            $formattedErrors[$error->getPropertyPath()][] = (string) $error->getMessage();
         }
 
         return $formattedErrors;
