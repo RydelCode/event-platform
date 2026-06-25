@@ -4,32 +4,39 @@ declare(strict_types=1);
 
 namespace App\Application\Event\ListEvents;
 
-use App\Entity\Event;
-use App\Infrastructure\Cache\EventCache;
+use App\Application\Common\Pagination\PaginationMetaDto;
 use App\Repository\EventRepository;
-use Symfony\Contracts\Cache\CacheInterface;
-use Symfony\Contracts\Cache\ItemInterface;
 
-final readonly class ListEventsHandler
+final readonly class ListEventsHandler implements ListEventsHandlerInterface
 {
     public function __construct(
         private EventRepository $eventRepository,
-        private CacheInterface $cache,
     ) {
     }
 
-    /**
-     * @return EventListItemDto[]
-     */
-    public function handle(): array
+    public function handle(EventListQueryDto $query): EventListResponseDto
     {
-        return $this->cache->get(EventCache::LIST_KEY, function (ItemInterface $item): array {
-            $item->expiresAfter(EventCache::LIST_TTL);
+        $items = $this->eventRepository->findList(
+            page: $query->page,
+            limit: $query->limit,
+            status: $query->getStatus(),
+            startsAfter: $query->getStartsAfter(),
+            sort: $query->sort,
+            order: $query->order,
+        );
 
-            return array_map(
-                static fn (Event $event): EventListItemDto => EventListItemDto::fromEntity($event),
-                $this->eventRepository->findBy([], ['startsAt' => 'ASC']),
-            );
-        });
+        $total = $this->eventRepository->countList(
+            $query->getStatus(),
+            $query->getStartsAfter(),
+        );
+
+        return new EventListResponseDto(
+            items: $items,
+            meta: new PaginationMetaDto(
+                page: $query->page,
+                limit: $query->limit,
+                total: $total,
+            ),
+        );
     }
 }

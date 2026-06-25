@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Application\Event\ListEvents\EventListItemDto;
+use App\Domain\Event\EventStatus;
 use App\Entity\Event;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\LockMode;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -29,28 +32,50 @@ class EventRepository extends ServiceEntityRepository
         return $this->find($id);
     }
 
-    //    /**
-    //     * @return Event[] Returns an array of Event objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('e')
-    //            ->andWhere('e.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('e.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    public function findList(
+        int $page,
+        int $limit,
+        ?EventStatus $status,
+        ?\DateTimeImmutable $startsAfter,
+        string $sort,
+        string $order,
+    ): array {
+        $qb = $this->createQueryBuilder('e')
+            ->select(sprintf('NEW %s(e.id, e.title, e.description, e.location, e.capacity)', EventListItemDto::class))
+            ->orderBy('e.'.$sort, $order)
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit);
 
-    //    public function findOneBySomeField($value): ?Event
-    //    {
-    //        return $this->createQueryBuilder('e')
-    //            ->andWhere('e.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+        $this->applyFilters($qb, $status, $startsAfter);
+
+        return $qb->getQuery()->getArrayResult();
+    }
+
+    public function countList(
+        ?EventStatus $status,
+        ?\DateTimeImmutable $startsAfter,
+    ): int {
+        $qb = $this->createQueryBuilder('e')
+            ->select('COUNT(e.id)');
+
+        $this->applyFilters($qb, $status, $startsAfter);
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
+    private function applyFilters(
+        QueryBuilder $qb,
+        ?EventStatus $status,
+        ?\DateTimeImmutable $startsAfter,
+    ): void {
+        if (null !== $status) {
+            $qb->andWhere('e.status = :status')
+                ->setParameter('status', $status);
+        }
+
+        if (null !== $startsAfter) {
+            $qb->andWhere('e.startsAt > :startsAfter')
+                ->setParameter('startsAfter', $startsAfter);
+        }
+    }
 }

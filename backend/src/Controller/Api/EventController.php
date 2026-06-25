@@ -10,6 +10,7 @@ use App\Application\Event\CreateEvent\CreateEventDto;
 use App\Application\Event\CreateEvent\CreateEventHandler;
 use App\Application\Event\EventTransitionHandler;
 use App\Application\Event\GetEventDetails\GetEventDetailsHandler;
+use App\Application\Event\ListEvents\EventListQueryDto;
 use App\Application\Event\ListEvents\ListEventsHandler;
 use App\Application\Event\PublishEvent\PublishEventHandler;
 use App\Application\Event\RegisterForEvent\DuplicateRegistrationDetectedException;
@@ -25,15 +26,18 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class EventController extends AbstractController
 {
     #[Route('/api/events', name: 'api_events_index', methods: ['GET'])]
-    public function index(ListEventsHandler $handler): JsonResponse
+    public function index(
+        #[MapQueryString] EventListQueryDto $query,
+        ListEventsHandler $handler): JsonResponse
     {
-        return $this->json($handler->handle());
+        return $this->json($handler->handle($query));
     }
 
     #[Route('/api/events', name: 'api_events_create', methods: ['POST'])]
