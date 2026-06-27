@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Event\ListEvents;
 
-use Application\Common\Pagination\PaginationMetaDto;
+use App\Application\Common\Pagination\PaginationMetaDto;
 
 final readonly class EventListResponseDto
 {

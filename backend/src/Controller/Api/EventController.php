@@ -11,7 +11,7 @@ use App\Application\Event\CreateEvent\CreateEventHandler;
 use App\Application\Event\EventTransitionHandler;
 use App\Application\Event\GetEventDetails\GetEventDetailsHandler;
 use App\Application\Event\ListEvents\EventListQueryDto;
-use App\Application\Event\ListEvents\ListEventsHandler;
+use App\Application\Event\ListEvents\ListEventsHandlerInterface;
 use App\Application\Event\PublishEvent\PublishEventHandler;
 use App\Application\Event\RegisterForEvent\DuplicateRegistrationDetectedException;
 use App\Application\Event\RegisterForEvent\EventCapacityExceededException;
@@ -34,8 +34,8 @@ final class EventController extends AbstractController
 {
     #[Route('/api/events', name: 'api_events_index', methods: ['GET'])]
     public function index(
-        #[MapQueryString] EventListQueryDto $query,
-        ListEventsHandler $handler): JsonResponse
+        #[MapQueryString(validationFailedStatusCode: Response::HTTP_BAD_REQUEST)] EventListQueryDto $query,
+        ListEventsHandlerInterface $handler): JsonResponse
     {
         return $this->json($handler->handle($query));
     }
