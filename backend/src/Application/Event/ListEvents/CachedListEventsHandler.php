@@ -19,7 +19,7 @@ final readonly class CachedListEventsHandler implements ListEventsHandlerInterfa
     public function handle(EventListQueryDto $query): EventListResponseDto
     {
         return $this->cache->get(
-            EventCache::listKey($query),
+            $this->cacheKey($query),
             function (ItemInterface $item) use ($query): EventListResponseDto {
                 $item->expiresAfter(EventCache::LIST_TTL);
                 $item->tag(EventCache::LIST_TAG);
@@ -27,5 +27,17 @@ final readonly class CachedListEventsHandler implements ListEventsHandlerInterfa
                 return $this->inner->handle($query);
             }
         );
+    }
+
+    private function cacheKey(EventListQueryDto $query): string
+    {
+        return EventCache::LIST_TAG_PREFIX.md5(json_encode([
+            'page' => $query->page,
+            'limit' => $query->limit,
+            'status' => $query->status,
+            'startsAfter' => $query->startsAfter,
+            'sort' => $query->sort,
+            'order' => $query->order,
+        ], JSON_THROW_ON_ERROR));
     }
 }
