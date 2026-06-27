@@ -34,7 +34,8 @@ final class EventApiTest extends WebTestCase
 
         $data = $this->decodeJsonResponse($client);
 
-        self::assertIsArray($data);
+        self::assertArrayHasKey('items', $data);
+        self::assertArrayHasKey('meta', $data);
     }
 
     public function testMissingEventReturnsNotFound(): void
@@ -257,14 +258,194 @@ final class EventApiTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
 
-        $events = $this->decodeJsonResponse($client);
-        $ids = array_column($events, 'id');
+        $response = $this->decodeJsonResponse($client);
+        $ids = array_column($response['items'], 'id');
         self::assertContains($laterEvent['id'], $ids);
         self::assertContains($earlierEvent['id'], $ids);
         self::assertLessThan(
             array_search($laterEvent['id'], $ids, true),
             array_search($earlierEvent['id'], $ids, true)
         );
+    }
+
+    public function testListEventsFiltersByStatus(): void
+    {
+        $client = static::createClient();
+
+        $draftEvent = $this->createEvent($client, [
+            ...self::EVENT_CREATE_TEST_CASE,
+            'title' => 'Draft Event',
+        ]);
+        $publishedEvent = $this->createEvent($client, [
+            ...self::EVENT_CREATE_TEST_CASE,
+            'title' => 'Published Event',
+        ]);
+        $this->publishEvent($client, $publishedEvent['id']);
+
+        $client->request('GET', '/api/events?status=published');
+
+        self::assertResponseIsSuccessful();
+
+        $response = $this->decodeJsonResponse($client);
+        $ids = array_column($response['items'], 'id');
+
+        self::assertContains($publishedEvent['id'], $ids);
+        self::assertNotContains($draftEvent['id'], $ids);
+    }
+
+    public function testListEventsWithInvalidStatusReturnsBadRequest(): void
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/api/events?status=not-a-status');
+
+        self::assertResponseStatusCodeSame(400);
+    }
+
+    public function testListEventsFiltersByStartsAfter(): void
+    {
+        $client = static::createClient();
+
+        $earlierEvent = $this->createEvent($client, [
+            ...self::EVENT_CREATE_TEST_CASE,
+            'title' => 'Earlier Event',
+            'startsAt' => '2026-06-01T10:00',
+            'endsAt' => '2026-06-01T15:00',
+        ]);
+        $laterEvent = $this->createEvent($client, [
+            ...self::EVENT_CREATE_TEST_CASE,
+            'title' => 'Later Event',
+            'startsAt' => '2026-06-05T10:00',
+            'endsAt' => '2026-06-05T15:00',
+        ]);
+
+        $client->request('GET', '/api/events?startsAfter=2026-06-02T00:00');
+
+        self::assertResponseIsSuccessful();
+
+        $response = $this->decodeJsonResponse($client);
+        $ids = array_column($response['items'], 'id');
+
+        self::assertContains($laterEvent['id'], $ids);
+        self::assertNotContains($earlierEvent['id'], $ids);
+    }
+
+    public function testListEventsWithInvalidStartsAfterReturnsBadRequest(): void
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/api/events?startsAfter=not-a-date');
+
+        self::assertResponseStatusCodeSame(400);
+    }
+
+    public function testListEventsSortsByEndsAtDescending(): void
+    {
+        $client = static::createClient();
+
+        $earlierEvent = $this->createEvent($client, [
+            ...self::EVENT_CREATE_TEST_CASE,
+            'title' => 'Earlier Event',
+            'startsAt' => '2026-06-01T10:00',
+            'endsAt' => '2026-06-01T15:00',
+        ]);
+        $laterEvent = $this->createEvent($client, [
+            ...self::EVENT_CREATE_TEST_CASE,
+            'title' => 'Later Event',
+            'startsAt' => '2026-06-05T10:00',
+            'endsAt' => '2026-06-05T15:00',
+        ]);
+
+        $client->request('GET', '/api/events?sort=endsAt&order=desc');
+
+        self::assertResponseIsSuccessful();
+
+        $response = $this->decodeJsonResponse($client);
+        $ids = array_column($response['items'], 'id');
+
+        self::assertLessThan(
+            array_search($earlierEvent['id'], $ids, true),
+            array_search($laterEvent['id'], $ids, true)
+        );
+    }
+
+    public function testListEventsWithInvalidSortReturnsBadRequest(): void
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/api/events?sort=notAField');
+
+        self::assertResponseStatusCodeSame(400);
+    }
+
+    public function testListEventsWithInvalidOrderReturnsBadRequest(): void
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/api/events?order=sideways');
+
+        self::assertResponseStatusCodeSame(400);
+    }
+
+    public function testListEventsPaginatesResults(): void
+    {
+        $client = static::createClient();
+
+        for ($i = 0; $i < 3; ++$i) {
+            $this->createEvent($client, [
+                ...self::EVENT_CREATE_TEST_CASE,
+                'title' => 'Paginated Event '.$i,
+                'startsAt' => sprintf('2026-07-0%dT10:00', $i + 1),
+                'endsAt' => sprintf('2026-07-0%dT15:00', $i + 1),
+            ]);
+        }
+
+        $client->request('GET', '/api/events?page=1&limit=2');
+
+        self::assertResponseIsSuccessful();
+
+        $page1 = $this->decodeJsonResponse($client);
+
+        self::assertCount(2, $page1['items']);
+        self::assertSame('Paginated Event 0', $page1['items'][0]['title']);
+        self::assertSame('Paginated Event 1', $page1['items'][1]['title']);
+
+        self::assertSame(1, $page1['meta']['page']);
+        self::assertSame(2, $page1['meta']['limit']);
+        self::assertSame(3, $page1['meta']['total']);
+        self::assertSame(2, $page1['meta']['pages']);
+
+        $client->request('GET', '/api/events?page=2&limit=2');
+
+        self::assertResponseIsSuccessful();
+
+        $page2 = $this->decodeJsonResponse($client);
+
+        self::assertCount(1, $page2['items']);
+        self::assertSame('Paginated Event 2', $page2['items'][0]['title']);
+
+        self::assertSame(2, $page2['meta']['page']);
+        self::assertSame(2, $page2['meta']['limit']);
+        self::assertSame(3, $page2['meta']['total']);
+        self::assertSame(2, $page2['meta']['pages']);
+    }
+
+    public function testListEventsWithInvalidPageReturnsBadRequest(): void
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/api/events?page=0');
+
+        self::assertResponseStatusCodeSame(400);
+    }
+
+    public function testListEventsWithLimitOutOfRangeReturnsBadRequest(): void
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/api/events?limit=100');
+
+        self::assertResponseStatusCodeSame(400);
     }
 
     public function testCreateRegistrationReturnsCreatedResponse(): void
@@ -344,6 +525,11 @@ final class EventApiTest extends WebTestCase
         self::assertSame('Email already registered for the event', $response['message']);
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     *
+     * @return array<string, mixed>
+     */
     private function createEvent(KernelBrowser $client, array $payload): array
     {
         $this->postJson($client, '/api/events', $payload);
@@ -374,6 +560,9 @@ final class EventApiTest extends WebTestCase
         self::assertResponseIsSuccessful();
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     */
     private function postJson(KernelBrowser $client, string $uri, array $payload): void
     {
         $client->request(
@@ -384,10 +573,17 @@ final class EventApiTest extends WebTestCase
         );
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function decodeJsonResponse(KernelBrowser $client): array
     {
+        $content = $client->getResponse()->getContent();
+
+        self::assertIsString($content);
+
         return json_decode(
-            $client->getResponse()->getContent(),
+            $content,
             true,
             512,
             JSON_THROW_ON_ERROR

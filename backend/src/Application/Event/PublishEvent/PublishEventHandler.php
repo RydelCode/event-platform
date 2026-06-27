@@ -4,19 +4,18 @@ declare(strict_types=1);
 
 namespace App\Application\Event\PublishEvent;
 
+use App\Application\Event\EventListCacheInvalidator;
 use App\Application\Event\EventTransitionHandler;
 use App\Entity\Event;
-use App\Infrastructure\Cache\EventCache;
 use App\Repository\EventRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Contracts\Cache\CacheInterface;
 
 final readonly class PublishEventHandler implements EventTransitionHandler
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
         private EventRepository $eventRepository,
-        private CacheInterface $cache,
+        private EventListCacheInvalidator $eventListCacheInvalidator,
     ) {
     }
 
@@ -32,7 +31,7 @@ final readonly class PublishEventHandler implements EventTransitionHandler
 
         $this->entityManager->flush();
 
-        $this->cache->delete(EventCache::LIST_KEY);
+        $this->eventListCacheInvalidator->invalidate();
 
         return $event;
     }
