@@ -13,13 +13,15 @@ final class EventCache
 
     public static function listKey(EventListQueryDto $query): string
     {
-        return self::LIST_TAG.md5(json_encode([
+        $keyPayload = json_encode([
             'page' => $query->page,
             'limit' => $query->limit,
             'status' => $query->status,
             'startsAfter' => $query->startsAfter,
             'sort' => $query->sort,
             'order' => $query->order,
-        ]));
+        ], JSON_THROW_ON_ERROR);
+
+        return self::LIST_TAG.md5($keyPayload);
     }
 }
