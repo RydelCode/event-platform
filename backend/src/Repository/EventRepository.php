@@ -17,6 +17,11 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class EventRepository extends ServiceEntityRepository
 {
+    private const SORT_FIELDS = [
+        'startsAt' => 'e.startsAt',
+        'endsAt' => 'e.endsAt',
+    ];
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Event::class);
@@ -32,6 +37,9 @@ class EventRepository extends ServiceEntityRepository
         return $this->find($id);
     }
 
+    /**
+     * @return list<EventListItemDto>
+     */
     public function findList(
         int $page,
         int $limit,
@@ -40,15 +48,28 @@ class EventRepository extends ServiceEntityRepository
         string $sort,
         string $order,
     ): array {
+        $sortField = self::SORT_FIELDS[$sort] ?? null;
+
+        if (null === $sortField) {
+            throw new \InvalidArgumentException(sprintf('Unsupported sort field "%s".', $sort));
+        }
+
+        $order = strtolower($order);
+
+        if (!in_array($order, ['asc', 'desc'], true)) {
+            throw new \InvalidArgumentException(sprintf('Unsupported sort order "%s".', $order));
+        }
+
         $qb = $this->createQueryBuilder('e')
-            ->select(sprintf('NEW %s(e.id, e.title, e.description, e.location, e.capacity)', EventListItemDto::class))
-            ->orderBy('e.'.$sort, $order)
+            ->select(sprintf('NEW %s(e.id, e.title, e.status, e.description, e.location, e.capacity)', EventListItemDto::class))
+            ->orderBy($sortField, $order)
+            ->addOrderBy('e.id', $order)
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit);
 
         $this->applyFilters($qb, $status, $startsAfter);
 
-        return $qb->getQuery()->getArrayResult();
+        return $qb->getQuery()->getResult();
     }
 
     public function countList(
