@@ -1,14 +1,51 @@
 import { apiClient } from "./client";
 import { apiEndpoints } from "./endpoints";
 
+export type EventStatus = "draft" | "published" | "cancelled" | "completed";
+export type EventSortField = "startsAt" | "endsAt";
+export type SortDirection = "asc" | "desc";
+
 export type EventItem = {
   id: number;
+  status: EventStatus;
   title: string;
   description: string | null;
   startsAt: string;
   endsAt: string;
   location: string;
   capacity: number;
+};
+
+export type EventListItem = {
+  id: number;
+  title: string;
+  status: EventStatus;
+  description: string | null;
+  startsAt: string;
+  endsAt: string;
+  location: string;
+  capacity: number;
+};
+
+export type EventListParams = {
+  page?: number;
+  limit?: number;
+  status?: EventStatus;
+  startsAfter?: string;
+  sort?: EventSortField;
+  direction?: SortDirection;
+};
+
+export type PaginationMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+};
+
+export type EventListResponse = {
+  items: EventListItem[];
+  meta: PaginationMeta;
 };
 
 export type CreateEventPayload = {
@@ -35,8 +72,11 @@ export type RegisterForEventResponse = {
   id: number;
 };
 
-export async function fetchEvents(): Promise<EventItem[]> {
-  const response = await apiClient.get<EventItem[]>(apiEndpoints.events);
+export async function fetchEvents(
+  params: EventListParams = {},
+  signal?: AbortSignal,
+): Promise<EventListResponse> {
+  const response = await apiClient.get<EventListResponse>(apiEndpoints.events, { params, signal });
 
   return response.data;
 }
