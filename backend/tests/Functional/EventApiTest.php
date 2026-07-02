@@ -319,7 +319,7 @@ final class EventApiTest extends WebTestCase
             'endsAt' => '2026-06-05T15:00',
         ]);
 
-        $client->request('GET', '/api/events?startsAfter=2026-06-02T00:00');
+        $client->request('GET', '/api/events?startsAfter=2026-06-02');
 
         self::assertResponseIsSuccessful();
 
@@ -356,7 +356,7 @@ final class EventApiTest extends WebTestCase
             'endsAt' => '2026-06-05T15:00',
         ]);
 
-        $client->request('GET', '/api/events?sort=endsAt&order=desc');
+        $client->request('GET', '/api/events?sort=endsAt&direction=desc');
 
         self::assertResponseIsSuccessful();
 
@@ -382,7 +382,7 @@ final class EventApiTest extends WebTestCase
     {
         $client = static::createClient();
 
-        $client->request('GET', '/api/events?order=sideways');
+        $client->request('GET', '/api/events?direction=sideways');
 
         self::assertResponseStatusCodeSame(400);
     }

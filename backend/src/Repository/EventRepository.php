@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Application\Event\ListEvents\EventListItemDto;
+use App\Application\Event\ListEvents\EventSortField;
+use App\Application\Event\ListEvents\SortDirection;
 use App\Domain\Event\EventStatus;
 use App\Entity\Event;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -17,11 +19,6 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class EventRepository extends ServiceEntityRepository
 {
-    private const SORT_FIELDS = [
-        'startsAt' => 'e.startsAt',
-        'endsAt' => 'e.endsAt',
-    ];
-
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Event::class);
@@ -45,25 +42,18 @@ class EventRepository extends ServiceEntityRepository
         int $limit,
         ?EventStatus $status,
         ?\DateTimeImmutable $startsAfter,
-        string $sort,
-        string $order,
+        EventSortField $sort,
+        SortDirection $direction,
     ): array {
-        $sortField = self::SORT_FIELDS[$sort] ?? null;
-
-        if (null === $sortField) {
-            throw new \InvalidArgumentException(sprintf('Unsupported sort field "%s".', $sort));
-        }
-
-        $order = strtolower($order);
-
-        if (!in_array($order, ['asc', 'desc'], true)) {
-            throw new \InvalidArgumentException(sprintf('Unsupported sort order "%s".', $order));
-        }
+        $sortField = match ($sort) {
+            EventSortField::STARTS_AT => 'e.startsAt',
+            EventSortField::ENDS_AT => 'e.endsAt',
+        };
 
         $qb = $this->createQueryBuilder('e')
-            ->select(sprintf('NEW %s(e.id, e.title, e.status, e.description, e.location, e.capacity)', EventListItemDto::class))
-            ->orderBy($sortField, $order)
-            ->addOrderBy('e.id', $order)
+            ->select(sprintf('NEW %s(e.id, e.status, e.title, e.description, e.startsAt, e.endsAt, e.location, e.capacity)', EventListItemDto::class))
+            ->orderBy($sortField, $direction->value)
+            ->addOrderBy('e.id', $direction->value)
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit);
 
