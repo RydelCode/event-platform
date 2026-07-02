@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { EventCreateForm } from "./components/EventCreateForm";
-import {
-  fetchEvents,
-  type EventListItem,
-  type PaginationMeta,
-} from "./api/events";
+import { fetchEvents, type EventListItem, type PaginationMeta } from "./api/events";
 import { EventList } from "./components/EventList";
 import { EventFilters } from "./components/EventFilters";
 import { Pagination } from "./components/Pagination";
@@ -32,63 +28,72 @@ function App() {
   const status = isOptionValue(EVENT_STATUS_OPTIONS, statusParam) ? statusParam : "";
   const startsAfter = searchParams.get("startsAfter") ?? "";
   const sortParam = searchParams.get("sort") ?? "";
-  const sort = isOptionValue(EVENT_SORT_FIELD_OPTIONS, sortParam) ? sortParam : DEFAULT_EVENT_FILTERS.sort;
+  const sort = isOptionValue(EVENT_SORT_FIELD_OPTIONS, sortParam)
+    ? sortParam
+    : DEFAULT_EVENT_FILTERS.sort;
   const directionParam = searchParams.get("direction") ?? "";
-  const direction = isOptionValue(SORT_DIRECTION_OPTIONS, directionParam) ? directionParam : DEFAULT_EVENT_FILTERS.direction;
+  const direction = isOptionValue(SORT_DIRECTION_OPTIONS, directionParam)
+    ? directionParam
+    : DEFAULT_EVENT_FILTERS.direction;
 
   const [events, setEvents] = useState<EventListItem[]>([]);
   const [meta, setMeta] = useState<PaginationMeta>(defaultMeta);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadEvents = useCallback(async (signal?: AbortSignal): Promise<void> => {
-    const requestId = ++latestRequestId.current;
+  const loadEvents = useCallback(
+    async (signal?: AbortSignal): Promise<void> => {
+      const requestId = ++latestRequestId.current;
 
-    setIsLoading(true);
-    setError(null);
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      const response = await fetchEvents({
-        page,
-        limit,
-        status: status || undefined,
-        startsAfter: startsAfter || undefined,
-        sort,
-        direction: direction,
-      }, signal );
+      try {
+        const response = await fetchEvents(
+          {
+            page,
+            limit,
+            status: status || undefined,
+            startsAfter: startsAfter || undefined,
+            sort,
+            direction: direction,
+          },
+          signal,
+        );
 
-      if (requestId !== latestRequestId.current) {
-        return;
-      }
+        if (requestId !== latestRequestId.current) {
+          return;
+        }
 
-      setEvents(response.items);
-      setMeta(response.meta);
-    } catch (err) {
-      if (requestId !== latestRequestId.current || isRequestCanceled(err)) {
-        return;
+        setEvents(response.items);
+        setMeta(response.meta);
+      } catch (err) {
+        if (requestId !== latestRequestId.current || isRequestCanceled(err)) {
+          return;
+        }
+        if (err instanceof ApiError) {
+          setError(err.message);
+        } else {
+          setError("Could not load events.");
+        }
+      } finally {
+        if (requestId === latestRequestId.current) {
+          setIsLoading(false);
+        }
       }
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError("Could not load events.");
-      }
-    } finally {
-      if (requestId === latestRequestId.current) {
-        setIsLoading(false);
-      }
-    }
-  }, [page, limit, status, startsAfter, sort, direction]);
+    },
+    [page, limit, status, startsAfter, sort, direction],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
-
 
     void loadEvents(controller.signal);
 
     return () => {
       controller.abort();
       latestRequestId.current += 1;
-    }
+    };
   }, [loadEvents]);
 
   function updateParams(updates: Record<string, string>, resetPage = true): void {
