@@ -24,6 +24,10 @@ export const apiClient = axios.create({
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (axios.isCancel(error)) {
+      return Promise.reject(error);
+    }
+
     if (axios.isAxiosError<ApiErrorResponse>(error)) {
       return Promise.reject(
         new ApiError(
@@ -37,3 +41,7 @@ apiClient.interceptors.response.use(
     return Promise.reject(new ApiError("Unexpected error"));
   },
 );
+
+export function isRequestCanceled(error: unknown): boolean {
+  return axios.isCancel(error);
+}

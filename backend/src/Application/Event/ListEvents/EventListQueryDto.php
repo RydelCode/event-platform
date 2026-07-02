@@ -19,14 +19,14 @@ final readonly class EventListQueryDto
         #[Assert\Choice(callback: [EventStatus::class, 'values'])]
         public ?string $status = null,
 
-        #[Assert\DateTime(format: 'Y-m-d\TH:i')]
+        #[Assert\Date]
         public ?string $startsAfter = null,
 
-        #[Assert\Choice(choices: ['startsAt', 'endsAt'])]
-        public string $sort = 'startsAt',
+        #[Assert\Choice(callback: [EventSortField::class, 'values'])]
+        public string $sort = EventSortField::STARTS_AT->value,
 
-        #[Assert\Choice(choices: ['asc', 'desc'])]
-        public string $order = 'asc',
+        #[Assert\Choice(callback: [SortDirection::class, 'values'])]
+        public string $direction = SortDirection::ASC->value,
     ) {
     }
 
@@ -35,8 +35,22 @@ final readonly class EventListQueryDto
         return null !== $this->status ? EventStatus::from($this->status) : null;
     }
 
+    public function getSort(): EventSortField
+    {
+        return EventSortField::from($this->sort);
+    }
+
+    public function getDirection(): SortDirection
+    {
+        return SortDirection::from($this->direction);
+    }
+
     public function getStartsAfter(): ?\DateTimeImmutable
     {
-        return null !== $this->startsAfter ? new \DateTimeImmutable($this->startsAfter) : null;
+        if (null !== $this->startsAfter) {
+            return \DateTimeImmutable::createFromFormat('!Y-m-d', $this->startsAfter) ?: null;
+        }
+
+        return null;
     }
 }

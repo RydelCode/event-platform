@@ -21,8 +21,8 @@ final readonly class ListEventsHandler implements ListEventsHandlerInterface
             limit: $query->limit,
             status: $query->getStatus(),
             startsAfter: $query->getStartsAfter(),
-            sort: $query->sort,
-            order: $query->order,
+            sort: $query->getSort(),
+            direction: $query->getDirection(),
         );
 
         $total = $this->eventRepository->countList(

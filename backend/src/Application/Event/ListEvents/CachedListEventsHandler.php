@@ -37,7 +37,7 @@ final readonly class CachedListEventsHandler implements ListEventsHandlerInterfa
             'status' => $query->status,
             'startsAfter' => $query->startsAfter,
             'sort' => $query->sort,
-            'order' => $query->order,
+            'direction' => $query->direction,
         ], JSON_THROW_ON_ERROR));
     }
 }
