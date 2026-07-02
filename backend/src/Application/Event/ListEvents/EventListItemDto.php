@@ -4,31 +4,24 @@ declare(strict_types=1);
 
 namespace App\Application\Event\ListEvents;
 
-use App\Entity\Event;
+use App\Domain\Event\EventStatus;
 
 final readonly class EventListItemDto
 {
+    public string $startsAt;
+    public string $endsAt;
+
     public function __construct(
         public int $id,
+        public EventStatus $status,
         public string $title,
         public ?string $description,
-        public string $startsAt,
-        public string $endsAt,
+        \DateTimeImmutable $startsAt,
+        \DateTimeImmutable $endsAt,
         public string $location,
         public int $capacity,
     ) {
-    }
-
-    public static function fromEntity(Event $event): self
-    {
-        return new self(
-            $event->getId(),
-            $event->getTitle(),
-            $event->getDescription(),
-            $event->getStartsAt()->format(DATE_ATOM),
-            $event->getEndsAt()->format(DATE_ATOM),
-            $event->getLocation(),
-            $event->getCapacity()
-        );
+        $this->startsAt = $startsAt->format('Y-m-d\TH:i');
+        $this->endsAt = $endsAt->format('Y-m-d\TH:i');
     }
 }

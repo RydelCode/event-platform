@@ -21,3 +21,10 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+    App\Application\Event\ListEvents\CachedListEventsHandler:
+        decorates: App\Application\Event\ListEvents\ListEventsHandler
+        arguments:
+            $inner: '@App\Application\Event\ListEvents\CachedListEventsHandler.inner'
+
+    App\Application\Event\ListEvents\ListEventsHandlerInterface:
+        alias: App\Application\Event\ListEvents\CachedListEventsHandler

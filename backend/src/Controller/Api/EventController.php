@@ -4,28 +4,40 @@ declare(strict_types=1);
 
 namespace App\Controller\Api;
 
+use App\Application\Event\CancelEvent\CancelEventHandler;
+use App\Application\Event\CompleteEvent\CompleteEventHandler;
 use App\Application\Event\CreateEvent\CreateEventDto;
 use App\Application\Event\CreateEvent\CreateEventHandler;
+use App\Application\Event\EventTransitionHandler;
 use App\Application\Event\GetEventDetails\GetEventDetailsHandler;
-use App\Application\Event\ListEvents\ListEventsHandler;
+use App\Application\Event\ListEvents\EventListQueryDto;
+use App\Application\Event\ListEvents\ListEventsHandlerInterface;
+use App\Application\Event\PublishEvent\PublishEventHandler;
 use App\Application\Event\RegisterForEvent\DuplicateRegistrationDetectedException;
 use App\Application\Event\RegisterForEvent\EventCapacityExceededException;
+use App\Application\Event\RegisterForEvent\EventNotPublishedException;
 use App\Application\Event\RegisterForEvent\RegisterForEventDto;
 use App\Application\Event\RegisterForEvent\RegisterForEventHandler;
+use App\Domain\Event\EventCannotBeCancelledException;
+use App\Domain\Event\EventCannotBeCompletedException;
+use App\Domain\Event\EventCannotBePublishedException;
 use App\Infrastructure\Http\ValidationErrorFormatter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class EventController extends AbstractController
 {
     #[Route('/api/events', name: 'api_events_index', methods: ['GET'])]
-    public function index(ListEventsHandler $handler): JsonResponse
+    public function index(
+        #[MapQueryString(validationFailedStatusCode: Response::HTTP_BAD_REQUEST)] EventListQueryDto $query,
+        ListEventsHandlerInterface $handler): JsonResponse
     {
-        return $this->json($handler->handle());
+        return $this->json($handler->handle($query));
     }
 
     #[Route('/api/events', name: 'api_events_create', methods: ['POST'])]
@@ -94,6 +106,10 @@ final class EventController extends AbstractController
 
         try {
             $registration = $handler->handle($id, $dto);
+        } catch (EventNotPublishedException) {
+            return $this->json([
+                'message' => 'Event is not open for registration',
+            ], Response::HTTP_CONFLICT);
         } catch (EventCapacityExceededException) {
             return $this->json([
                 'message' => 'Event is full',
@@ -114,5 +130,55 @@ final class EventController extends AbstractController
             'message' => 'Registration created',
             'id' => $registration->getId(),
         ], Response::HTTP_CREATED);
+    }
+
+    #[Route('/api/events/{id}/cancel', name: 'api_events_cancel', methods: ['POST'])]
+    public function cancel(
+        int $id,
+        CancelEventHandler $handler,
+    ): JsonResponse {
+        return $this->handleEventTransition($id, $handler, 'Event cancelled', 'Event cannot be cancelled');
+    }
+
+    #[Route('/api/events/{id}/complete', name: 'api_events_complete', methods: ['POST'])]
+    public function complete(
+        int $id,
+        CompleteEventHandler $handler,
+    ): JsonResponse {
+        return $this->handleEventTransition($id, $handler, 'Event completed', 'Event cannot be completed');
+    }
+
+    #[Route('/api/events/{id}/publish', name: 'api_events_publish', methods: ['POST'])]
+    public function publish(
+        int $id,
+        PublishEventHandler $handler,
+    ): JsonResponse {
+        return $this->handleEventTransition($id, $handler, 'Event published', 'Event cannot be published');
+    }
+
+    private function handleEventTransition(
+        int $eventId,
+        EventTransitionHandler $handler,
+        string $successMessage,
+        string $errorMessage,
+    ): JsonResponse {
+        try {
+            $event = $handler->handle($eventId);
+        } catch (EventCannotBeCancelledException|EventCannotBeCompletedException|EventCannotBePublishedException) {
+            return $this->json([
+                'message' => $errorMessage,
+            ], Response::HTTP_CONFLICT);
+        }
+
+        if (null === $event) {
+            return $this->json([
+                'message' => 'No event found with ID: '.$eventId,
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->json([
+            'message' => $successMessage,
+            'id' => $event->getId(),
+        ], Response::HTTP_OK);
     }
 }

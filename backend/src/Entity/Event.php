@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Domain\Event\EventCannotBeCancelledException;
+use App\Domain\Event\EventCannotBeCompletedException;
+use App\Domain\Event\EventCannotBePublishedException;
+use App\Domain\Event\EventStatus;
 use App\Repository\EventRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -18,26 +22,29 @@ class Event
     #[ORM\Column]
     private ?int $id = null;
 
+    #[ORM\Column(enumType: EventStatus::class)]
+    private EventStatus $status;
+
     #[ORM\Column(length: 255)]
-    private ?string $title = null;
+    private string $title;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $startsAt = null;
+    private \DateTimeImmutable $startsAt;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $endsAt = null;
+    private \DateTimeImmutable $endsAt;
 
     #[ORM\Column(length: 255)]
-    private ?string $location = null;
+    private string $location;
 
     #[ORM\Column]
-    private ?int $capacity = null;
+    private int $capacity;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
+    private \DateTimeImmutable $createdAt;
 
     /**
      * @var Collection<int, Registration>
@@ -49,14 +56,52 @@ class Event
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->registrations = new ArrayCollection();
+        $this->status = EventStatus::DRAFT;
     }
 
-    public function getId(): ?int
+    public function getId(): int
     {
+        if (null === $this->id) {
+            throw new \LogicException('Event ID is not set');
+        }
+
         return $this->id;
     }
 
-    public function getTitle(): ?string
+    public function getStatus(): EventStatus
+    {
+        return $this->status;
+    }
+
+    public function publish(): void
+    {
+        if (EventStatus::DRAFT !== $this->status) {
+            throw new EventCannotBePublishedException();
+        }
+
+        $this->status = EventStatus::PUBLISHED;
+    }
+
+    public function cancel(): void
+    {
+        if (EventStatus::COMPLETED === $this->status
+        || EventStatus::CANCELLED === $this->status) {
+            throw new EventCannotBeCancelledException();
+        }
+
+        $this->status = EventStatus::CANCELLED;
+    }
+
+    public function complete(): void
+    {
+        if (EventStatus::PUBLISHED !== $this->status) {
+            throw new EventCannotBeCompletedException();
+        }
+
+        $this->status = EventStatus::COMPLETED;
+    }
+
+    public function getTitle(): string
     {
         return $this->title;
     }
@@ -80,7 +125,7 @@ class Event
         return $this;
     }
 
-    public function getStartsAt(): ?\DateTimeImmutable
+    public function getStartsAt(): \DateTimeImmutable
     {
         return $this->startsAt;
     }
@@ -92,7 +137,7 @@ class Event
         return $this;
     }
 
-    public function getEndsAt(): ?\DateTimeImmutable
+    public function getEndsAt(): \DateTimeImmutable
     {
         return $this->endsAt;
     }
@@ -104,7 +149,7 @@ class Event
         return $this;
     }
 
-    public function getLocation(): ?string
+    public function getLocation(): string
     {
         return $this->location;
     }
@@ -116,7 +161,7 @@ class Event
         return $this;
     }
 
-    public function getCapacity(): ?int
+    public function getCapacity(): int
     {
         return $this->capacity;
     }
@@ -128,7 +173,7 @@ class Event
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }
@@ -160,12 +205,7 @@ class Event
 
     public function removeRegistration(Registration $registration): static
     {
-        if ($this->registrations->removeElement($registration)) {
-            // set the owning side to null (unless already changed)
-            if ($registration->getEvent() === $this) {
-                $registration->setEvent(null);
-            }
-        }
+        $this->registrations->removeElement($registration);
 
         return $this;
     }
